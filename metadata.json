@@ -1,0 +1,8 @@
+{
+  "description": "نظام تقارير وإحصائيات مكافحة العدوى الأسبوعية والشهرية والسنوية مع دعم التخزين السحابي المرن عبر Turso و Google Sheets.",
+  "requestFramePermissions": [],
+  "name": "Remix Infection Reports App",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

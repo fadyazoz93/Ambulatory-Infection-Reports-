@@ -1,0 +1,2777 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>نظام تقارير مكافحة العدوى</title>
+  <meta name="description" content="نظام تقارير وإحصائيات مكافحة العدوى الأسبوعية والشهرية والسنوية مع دعم التخزين السحابي المرن عبر Turso و Google Sheets.">
+  <meta property="og:title" content="نظام تقارير مكافحة العدوى">
+  <meta property="og:description" content="نظام تقارير وإحصائيات مكافحة العدوى الأسبوعية والشهرية والسنوية مع دعم التخزين السحابي المرن عبر Turso و Google Sheets.">
+  <!-- Favicon / App Icons -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap');
+    body { font-family: 'Tajawal', sans-serif; background-color: #f9fafb; }
+    
+    /* Print Styles */
+    @media print {
+      /* 1. Global Resets for Print */
+      @page { margin: 5mm; size: auto; } /* Narrow Margins */
+
+      html, body { 
+        height: auto !important; 
+        overflow: visible !important; 
+        margin: 0 !important; 
+        padding: 0 !important;
+        width: 100% !important;
+        background-color: white !important;
+      }
+      
+      /* 2. Hide UI Navigation, Helpers & Default App Favicon in Print/PDF */
+      .no-print, #sidebar, #mobileMenu, #archive-filter-input, #loading, img[src*="favicon"] { 
+        display: none !important; 
+      }
+
+      /* Custom Right & Left Header Logos in Print/PDF */
+      .report-header-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+      }
+      .report-logo-slot {
+        width: 58px !important;
+        height: 58px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+      .report-logo-slot-right {
+        justify-content: flex-start !important;
+      }
+      .report-logo-slot-left {
+        justify-content: flex-end !important;
+      }
+      .report-header-logo {
+        max-width: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      /* 3. Reset Layout Containers */
+      div.flex.h-screen.overflow-hidden,
+      div.fixed.inset-0.flex.overflow-hidden {
+        position: static !important;
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      
+      #main-content {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+
+      /* 4. Section Visibility */
+      .page-section:not(.hidden) {
+        display: block !important;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* 5. Page Break Logic */
+      .page-break { 
+          page-break-after: always !important; 
+          break-after: page !important; 
+          display: block; 
+          height: 1px; 
+          width: 100%;
+          border: none;
+          margin: 0;
+          visibility: hidden;
+      }
+      
+      .print-container {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          margin-bottom: 5px; /* Reduced from 10px */
+      }
+      
+      .avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+      }
+
+      /* 6. Table Optimizations */
+      table { 
+          border-collapse: collapse !important; 
+          width: 100% !important; 
+          font-size: 9pt !important; /* Slightly smaller font for print */
+      }
+      thead { display: table-header-group; } 
+      tr { page-break-inside: avoid; break-inside: avoid; } 
+      th, td { 
+          border: 1px solid #000 !important; 
+          padding: 3px !important; /* Reduced padding */
+          color: #000 !important; 
+      }
+      thead th { 
+          background-color: #f3f4f6 !important; 
+          color: #000 !important;
+          border-bottom: 1px solid #000 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+      }
+      
+      .shadow-md, .shadow, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+      .border { border: 1px solid #ccc !important; }
+    }
+    
+    /* Loader */
+    .loader {
+      border: 4px solid #f3f3f3; border-top: 4px solid #1e3a8a; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Custom Scroll for Checkbox list */
+    .checkbox-list::-webkit-scrollbar { width: 6px; }
+    .checkbox-list::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    .checkbox-list::-webkit-scrollbar-track { background-color: #f1f5f9; }
+
+    /* Report Header Logos (Screen) */
+    .report-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .report-logo-slot {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    .report-logo-slot-right {
+      justify-content: flex-start;
+    }
+    .report-logo-slot-left {
+      justify-content: flex-end;
+    }
+    .report-header-logo {
+      max-width: 68px;
+      max-height: 68px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+  </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="text-gray-800">
+
+  <!-- Sidebar / Navigation -->
+  <div class="fixed inset-0 flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-blue-900 text-white flex-shrink-0 hidden md:flex flex-col no-print transition-all duration-300 shadow-xl" id="sidebar">
+      <div class="p-4 flex items-center justify-center font-bold text-xl border-b border-blue-800 gap-2.5">
+        <img src="/favicon.svg" alt="شعار مكافحة العدوى" class="w-8 h-8 object-contain drop-shadow">
+        <span>مكافحة العدوى</span>
+      </div>
+      <nav class="flex-1 overflow-y-auto py-4 flex flex-col">
+        <button onclick="nav('dashboard')" class="w-full text-right py-3 px-6 hover:bg-blue-800 transition border-l-4 border-transparent hover:border-blue-300"><i class="fas fa-chart-pie ml-3 w-6"></i> لوحة التحكم</button>
+        <button onclick="nav('weeklyReport')" class="nav-weekly nav-daily w-full text-right py-3 px-6 hover:bg-blue-800 transition border-l-4 border-transparent hover:border-blue-300"><i class="fas fa-calendar-week ml-3 w-6"></i> تقرير أسبوعي</button>
+        <button onclick="nav('monthlyReport')" class="w-full text-right py-3 px-6 hover:bg-blue-800 transition border-l-4 border-transparent hover:border-blue-300"><i class="fas fa-calendar-alt ml-3 w-6"></i> تقارير شهرية</button>
+        <button onclick="nav('annualReport')" class="w-full text-right py-3 px-6 hover:bg-blue-800 transition border-l-4 border-transparent hover:border-blue-300"><i class="fas fa-calendar ml-3 w-6"></i> تقرير سنوي</button>
+        <button onclick="nav('archive')" class="w-full text-right py-3 px-6 hover:bg-blue-800 transition border-l-4 border-transparent hover:border-blue-300"><i class="fas fa-box-archive ml-3 w-6"></i> الأرشيف</button>
+        <button onclick="nav('settings')" class="nav-settings w-full text-right py-3 px-6 hover:bg-blue-800 transition text-yellow-300"><i class="fas fa-cog ml-3 w-6"></i> الإعدادات</button>
+        <div class="mt-auto pt-4 border-t border-blue-800">
+            <button onclick="logout()" class="w-full text-right py-3 px-6 hover:bg-red-800 transition text-red-300"><i class="fas fa-sign-out-alt ml-3 w-6"></i> تسجيل خروج</button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed w-full bg-blue-900 text-white z-50 flex justify-between items-center p-3 px-4 no-print shadow-md">
+       <span class="font-bold flex items-center gap-2">
+         <img src="/favicon.svg" alt="شعار مكافحة العدوى" class="w-7 h-7 object-contain drop-shadow">
+         <span>مكافحة العدوى</span>
+       </span>
+       <button onclick="document.getElementById('mobileMenu').classList.toggle('hidden')"><i class="fas fa-bars text-lg"></i></button>
+    </div>
+    <div id="mobileMenu" class="hidden fixed top-14 left-0 w-full bg-blue-800 text-white z-40 no-print shadow-lg">
+        <button onclick="nav('dashboard')" class="block w-full text-right p-4 border-b border-blue-700">لوحة التحكم</button>
+        <button onclick="nav('weeklyReport')" class="nav-weekly nav-daily block w-full text-right p-4 border-b border-blue-700">تقرير أسبوعي</button>
+        <button onclick="nav('monthlyReport')" class="block w-full text-right p-4 border-b border-blue-700">تقارير شهرية</button>
+        <button onclick="nav('annualReport')" class="block w-full text-right p-4 border-b border-blue-700">تقرير سنوي</button>
+        <button onclick="nav('archive')" class="block w-full text-right p-4 border-b border-blue-700">الأرشيف</button>
+        <button onclick="nav('settings')" class="nav-settings block w-full text-right p-4 border-b border-blue-700 text-yellow-300">الإعدادات</button>
+        <button onclick="logout()" class="block w-full text-right p-4 text-red-300">تسجيل خروج</button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-auto bg-gray-50 pt-16 md:pt-0" id="main-content">
+      
+      <!-- Loading Indicator -->
+      <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-30 z-[100] flex justify-center items-center">
+        <div class="bg-white p-5 rounded-lg shadow-lg flex flex-col items-center">
+          <div class="loader mb-2"></div>
+          <p class="text-blue-900 font-bold">جاري المعالجة...</p>
+        </div>
+      </div>
+
+      <!-- Login Modal -->
+      <div id="login-modal" class="hidden fixed inset-0 bg-gray-900 z-[200] flex justify-center items-center p-4">
+        <div class="bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-blue-500 text-center">
+           <div class="w-16 h-16 mx-auto mb-3 bg-blue-950 p-2.5 rounded-full border border-blue-700 shadow-inner flex items-center justify-center">
+             <img src="/favicon.svg" alt="شعار مكافحة العدوى" class="w-full h-full object-contain">
+           </div>
+           <h3 class="text-xl font-bold mb-1 text-white">تسجيل الدخول</h3>
+           <p class="mb-4 text-xs text-blue-200">نظام تقارير مكافحة العدوى</p>
+           <input type="password" id="login-pass-input" class="w-full border border-gray-600 bg-gray-700 text-white placeholder-gray-400 p-2 rounded mb-4 text-center focus:outline-none focus:border-blue-400" placeholder="كلمة المرور">
+           <button onclick="submitLogin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-500 transition">دخول</button>
+        </div>
+      </div>
+
+      <!-- PAGES -->
+
+      <!-- 1. DASHBOARD -->
+      <section id="dashboard" class="page-section p-6">
+        <h2 class="text-2xl font-bold mb-6 text-blue-900 border-b border-gray-200 pb-2">لوحة التحكم (Dashboard)</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 border-r-4 border-r-blue-600">
+            <h3 class="text-gray-500 text-sm font-bold">إجمالي التقييمات هذا الأسبوع</h3>
+            <p class="text-3xl font-bold text-blue-700 mt-2" id="dash-daily-val">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 border-r-4 border-r-emerald-500">
+            <h3 class="text-gray-500 text-sm font-bold">إجمالي التقييمات هذا الشهر</h3>
+            <p class="text-3xl font-bold text-emerald-600 mt-2" id="dash-monthly-val">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 border-r-4 border-r-purple-500">
+            <h3 class="text-gray-500 text-sm font-bold">إجمالي التقييمات السنوية</h3>
+            <p class="text-3xl font-bold text-purple-600 mt-2" id="dash-yearly-val">0</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <h4 class="font-bold mb-4 text-blue-900">حجم التقييمات بالأقسام (شهري)</h4>
+            <canvas id="deptChart"></canvas>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <h4 class="font-bold mb-4 text-blue-900">نشاط المرور الزمني اليومي</h4>
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="mt-6 text-left no-print">
+          <button onclick="window.print()" class="manger-hide bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded shadow transition">
+            <i class="fas fa-print"></i> طباعة / حفظ PDF
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. SETTINGS -->
+      <section id="settings" class="page-section hidden p-6">
+        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+            <h2 class="text-2xl font-bold text-blue-900">إعدادات النظام</h2>
+            <div class="flex gap-2">
+                <button onclick="saveSettings()" class="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800 transition font-bold text-sm">حفظ التغييرات</button>
+            </div>
+        </div>
+        <div id="settings-save-banner" class="hidden mb-4 p-3 rounded border text-sm font-bold flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i id="settings-save-banner-icon" class="fas fa-check-circle"></i>
+                <span id="settings-save-banner-text"></span>
+            </div>
+            <button type="button" onclick="document.getElementById('settings-save-banner').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 px-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="settings-admin-banner" class="admin-only bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4 text-sm flex items-center">
+          <i class="fas fa-info-circle ml-2"></i> منطقة محمية (صلاحيات Admin الكاملة). التعديلات هنا تنعكس على كامل النظام.
+        </div>
+        <div id="settings-user-banner" class="user-only hidden bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded mb-4 text-sm flex items-center gap-2">
+          <i class="fas fa-shield-alt text-amber-600"></i>
+          <span><strong>صلاحية المستخدم (User):</strong> يمكنك عرض الإعدادات والإضافة إليها وتحديثها، مع إيقاف صلاحيات <strong>النسخ</strong> و<strong>الحذف</strong>.</span>
+        </div>
+
+        <!-- Storage Backend & Cloud Provider Status Card -->
+        <div id="storage-status-card" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div class="flex items-center gap-3">
+                    <div id="storage-provider-icon-wrapper" class="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-800 flex-shrink-0">
+                        <i id="storage-provider-icon" class="fas fa-database text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-bold text-gray-900 text-base">مصدر حفظ البيانات وتخزينها</h3>
+                            <span id="storage-provider-badge" class="px-2.5 py-0.5 text-xs rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                جاري التحقق...
+                            </span>
+                        </div>
+                        <p id="storage-provider-desc" class="text-xs text-gray-500 mt-0.5">
+                            يتم التبديل بين Turso و Google Sheets تلقائياً عبر متغيرات البيئة (Environment Variables) في Vercel.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="loadStorageStatus(true)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded border border-gray-300 font-medium transition flex items-center gap-1.5" title="إعادة فحص حالة الاتصال">
+                        <i class="fas fa-sync-alt" id="storage-refresh-spinner"></i> تحديث الحالة
+                    </button>
+                    <button type="button" id="btn-import-sheets-turso" onclick="triggerImportSheetsToTurso()" class="admin-only hidden text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded font-bold shadow-sm transition flex items-center gap-1.5" title="استيراد البيانات من Google Sheets إلى قاعدة بيانات Turso">
+                        <i class="fas fa-file-import"></i> استيراد من Sheets إلى Turso
+                    </button>
+                </div>
+            </div>
+
+            <!-- Details grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded border border-gray-200">
+                <div class="flex flex-col">
+                    <span class="text-gray-500 font-semibold mb-1">المزود النشط حالياً:</span>
+                    <span id="storage-active-name" class="font-bold text-gray-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-600 inline-block"></span> جاري الفحص...
+                    </span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-gray-500 font-semibold mb-1">تفاصيل الاتصال النشط:</span>
+                    <span id="storage-active-target" class="font-mono text-gray-700 dir-ltr text-left overflow-hidden text-ellipsis whitespace-nowrap">—</span>
+                </div>
+            </div>
+
+            <!-- Quick helper note explaining Vercel configuration -->
+            <div class="mt-3 text-[11px] text-gray-500 bg-blue-50/60 border border-blue-100 rounded p-2.5 flex items-start gap-2">
+                <i class="fas fa-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+                <div class="leading-relaxed">
+                    <strong>التحكم في مصدر البيانات من Vercel:</strong>
+                    لحفظ البيانات في <strong>Turso</strong> ضع <code class="bg-white px-1 py-0.5 rounded border border-blue-200 font-mono text-blue-800">TURSO_DATABASE_URL</code> و <code class="bg-white px-1 py-0.5 rounded border border-blue-200 font-mono text-blue-800">TURSO_AUTH_TOKEN</code>.
+                    وللحفظ في <strong>Google Sheets</strong> ضع <code class="bg-white px-1 py-0.5 rounded border border-blue-200 font-mono text-blue-800">VITE_SHEET_ID</code> أو <code class="bg-white px-1 py-0.5 rounded border border-blue-200 font-mono text-blue-800">GOOGLE_SHEET_ID</code>.
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded shadow-sm border border-gray-200 mb-6">
+            <h3 class="font-bold mb-4 text-blue-900">إعدادات عامة</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">اسم المستشفى (ترويسة التقارير)</label>
+                    <input type="text" id="set-hospital-name" oninput="updateLiveHeaderTitlePreview()" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">توقيع الفريق</label>
+                    <input type="text" id="set-team-signature" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="فريق مكافحة العدوى">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">توقيع المدير</label>
+                    <input type="text" id="set-manager-signature" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="مدير عام المستشفى">
+                </div>
+            </div>
+        </div>
+
+        <!-- Header Logos Configuration (Google Drive Links) -->
+        <div class="bg-white p-4 rounded shadow-sm border border-gray-200 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h3 class="font-bold text-blue-900 flex items-center gap-2">
+                    <i class="fas fa-images text-blue-700"></i> شعارات ترويسة التقارير (Google Drive)
+                </h3>
+                <span class="text-xs text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded">
+                    تظهر في الترويسة على الشاشة وعند طباعة PDF
+                </span>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">
+                الصق رابط مشاركة الصورة من جوجل درايف (تأكد من ضبط صلاحية الملف في Google Drive على: <strong>أي شخص لديه الرابط / Anyone with the link</strong>).
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+                <!-- Far Right Logo -->
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm font-bold text-gray-800">رابط اللوجو أقصى اليمين</label>
+                        <button type="button" onclick="clearLogoInput('right')" class="admin-only text-xs text-red-600 hover:text-red-800 font-bold">
+                            <i class="fas fa-times-circle"></i> مسح
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded border border-dashed border-gray-300 bg-white flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                            <img id="preview-right-logo" alt="لوجو اليمين" class="hidden max-w-full max-h-full object-contain" onload="onPreviewLogoLoad('right')" onerror="onPreviewLogoError('right')">
+                            <i id="placeholder-right-logo" class="fas fa-image text-gray-300 text-xl"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <input type="url" id="set-right-logo" dir="ltr" oninput="updateSettingsLogoPreview('right')" placeholder="https://drive.google.com/file/d/.../view?usp=sharing" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 text-xs focus:outline-none focus:border-blue-400">
+                            <p id="status-right-logo" class="text-[11px] text-gray-500 mt-1">اختياري — يظهر أقصى يمين الترويسة</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Far Left Logo -->
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm font-bold text-gray-800">رابط اللوجو أقصى اليسار</label>
+                        <button type="button" onclick="clearLogoInput('left')" class="admin-only text-xs text-red-600 hover:text-red-800 font-bold">
+                            <i class="fas fa-times-circle"></i> مسح
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded border border-dashed border-gray-300 bg-white flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                            <img id="preview-left-logo" alt="لوجو اليسار" class="hidden max-w-full max-h-full object-contain" onload="onPreviewLogoLoad('left')" onerror="onPreviewLogoError('left')">
+                            <i id="placeholder-left-logo" class="fas fa-image text-gray-300 text-xl"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <input type="url" id="set-left-logo" dir="ltr" oninput="updateSettingsLogoPreview('left')" placeholder="https://drive.google.com/file/d/.../view?usp=sharing" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 text-xs focus:outline-none focus:border-blue-400">
+                            <p id="status-left-logo" class="text-[11px] text-gray-500 mt-1">اختياري — يظهر أقصى يسار الترويسة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Header Simulation -->
+            <div class="border border-gray-300 rounded-lg p-4 bg-white">
+                <div class="text-[11px] font-bold text-gray-400 mb-2">معاينة شكل ترويسة التقرير (Header Preview):</div>
+                <div class="report-header-bar border-b-2 border-blue-900 pb-2">
+                    <div id="live-header-right-slot" class="report-logo-slot report-logo-slot-right"></div>
+                    <div class="text-center flex-1 px-2">
+                        <h4 id="live-header-hosp-name" class="text-base md:text-lg font-bold text-blue-900">مستشفى المنيا الجامعى للعيون</h4>
+                        <p class="text-sm font-bold text-blue-800">وحدة مكافحة العدوى</p>
+                        <p class="text-xs text-gray-500 mt-0.5">نموذج ترويسة التقرير المطبوع</p>
+                    </div>
+                    <div id="live-header-left-slot" class="report-logo-slot report-logo-slot-left"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-passwords-card" class="admin-only bg-white p-4 rounded shadow-sm border border-gray-200 mb-6">
+            <h3 class="font-bold mb-4 text-blue-900">كلمات المرور والصلاحيات</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">كلمة مرور Admin (كافة الصلاحيات)</label>
+                    <input type="text" id="pass-admin" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">كلمة مرور Manger (بدون إعدادات/أسبوعي/طباعة)</label>
+                    <input type="text" id="pass-manger" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">كلمة مرور User (إعدادات بدون نسخ أو حذف)</label>
+                    <input type="text" id="pass-user" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400">
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <!-- Depts -->
+           <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
+             <div class="flex items-center justify-between mb-2">
+               <h3 class="font-bold text-blue-900">الأقسام</h3>
+               <span class="user-only hidden text-[11px] text-amber-700 font-bold">إضافة فقط (الحذف مغلق)</span>
+             </div>
+             <textarea id="set-depts" class="w-full border border-gray-500 p-2 rounded h-32 bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="كل قسم في سطر جديد"></textarea>
+           </div>
+           <!-- Periods -->
+           <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
+             <div class="flex items-center justify-between mb-2">
+               <h3 class="font-bold text-blue-900">فترات المرور</h3>
+               <span class="user-only hidden text-[11px] text-amber-700 font-bold">إضافة فقط (الحذف مغلق)</span>
+             </div>
+             <textarea id="set-periods" class="w-full border border-gray-500 p-2 rounded h-32 bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="كل فترة في سطر جديد"></textarea>
+           </div>
+           <!-- Inspectors -->
+           <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
+             <div class="flex items-center justify-between mb-2">
+               <h3 class="font-bold text-blue-900">القائمين بالمرور</h3>
+               <span class="user-only hidden text-[11px] text-amber-700 font-bold">إضافة فقط (الحذف مغلق)</span>
+             </div>
+             <textarea id="set-inspectors" class="w-full border border-gray-500 p-2 rounded h-32 bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="كل اسم في سطر جديد"></textarea>
+           </div>
+        </div>
+
+        <div class="bg-white p-4 rounded shadow-sm border border-gray-200 mt-6 mb-6">
+            <h3 class="font-bold mb-2 text-blue-900">إجراءات مكافحة العدوى</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-right border border-gray-200">
+                  <thead class="bg-blue-50 text-blue-900">
+                      <tr>
+                          <th class="p-2 border border-gray-200 min-w-[160px]">الإجراء</th>
+                          <th class="p-2 border border-gray-200 min-w-[150px]">ملاحظة افتراضية</th>
+                          <th class="p-2 border border-gray-200 min-w-[150px]">توصية افتراضية</th>
+                          <th class="p-2 border border-gray-200 min-w-[140px]">المسؤول عن التنفيذ</th>
+                          <th class="p-2 border border-gray-200 min-w-[140px]">الأقسام المطبقة</th>
+                          <th class="p-2 border border-gray-200 w-12 text-center">إجراء</th>
+                      </tr>
+                  </thead>
+                  <tbody id="proc-table-body">
+                      <!-- Dynamic Rows -->
+                  </tbody>
+              </table>
+            </div>
+            
+            <div class="flex flex-wrap justify-between items-start mt-4 border-t border-gray-100 pt-4 gap-3">
+               <button onclick="addProcRow()" class="text-blue-700 text-sm font-bold hover:underline">+ إضافة إجراء جديد (يدوي)</button>
+               
+               <!-- Bulk Import Box (Admin Only - Copy Permission) -->
+               <div class="admin-only bg-gray-100 p-3 rounded border border-gray-300 w-full md:w-1/2 mt-2 md:mt-0">
+                  <h4 class="font-bold text-xs text-gray-700 mb-1 flex items-center gap-1">
+                      <i class="fas fa-file-excel text-green-600"></i> نسخ سريع من إكسيل (Bulk Import)
+                  </h4>
+                  <p class="text-[10px] text-gray-500 mb-2">انسخ الأعمدة من إكسيل بالترتيب: <strong>اسم الإجراء | الملاحظة | التوصية | المسؤول عن التنفيذ</strong></p>
+                  <textarea id="bulk-proc-input" class="w-full h-20 text-xs p-2 border border-gray-300 rounded focus:border-blue-500 outline-none" placeholder="الصق البيانات هنا..."></textarea>
+                  <button onclick="importBulkProcedures()" class="mt-2 bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700 transition">استيراد البيانات</button>
+               </div>
+            </div>
+        </div>
+
+        <!-- Database Optimization & Cloud Shielding Card -->
+        <div class="bg-gradient-to-r from-blue-900 to-indigo-950 text-white p-5 rounded-lg shadow-md mb-6 border border-blue-800">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-microchip text-emerald-400 text-lg"></i>
+                    <h3 class="font-bold text-base text-white">ترشيد استهلاك قاعدة البيانات (Database Optimization)</h3>
+                </div>
+                <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> درع الترشيد نشط
+                </span>
+            </div>
+            <p class="text-xs text-blue-200 mb-4 leading-relaxed">
+                النظام محمي بالكامل ضد استنزاف القراءات السحابية (Row Reads Exhaustion): فهارس إلزامية (Mandatory Indexes)، نمط الكاش العشوائي (In-Memory Cache-Aside)، حظر تام لاستعلامات SELECT *، وتقييد حجم الاستعلامات (Query Limits).
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div class="bg-white/10 p-2.5 rounded border border-white/10">
+                    <span class="text-blue-300 block mb-1">الفهارس الإلزامية</span>
+                    <strong class="text-emerald-300 font-bold">7 فهارس نشطة</strong>
+                </div>
+                <div class="bg-white/10 p-2.5 rounded border border-white/10">
+                    <span class="text-blue-300 block mb-1">طبقة الكاش السحابي</span>
+                    <strong class="text-white font-bold" id="cache-hit-rate">In-Memory (0 Reads)</strong>
+                </div>
+                <div class="bg-white/10 p-2.5 rounded border border-white/10">
+                    <span class="text-blue-300 block mb-1">القراءات الموفرة</span>
+                    <strong class="text-emerald-300 font-bold" id="cache-saved-reads">ترشيد لحظي</strong>
+                </div>
+                <div class="bg-white/10 p-2.5 rounded border border-white/10 flex items-center justify-center">
+                    <button onclick="refreshCacheMetricsUI()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition text-xs font-bold flex items-center gap-1">
+                        <i class="fas fa-sync-alt"></i> فحص الكاش
+                    </button>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- 3. WEEKLY REPORT FORM -->
+      <section id="weeklyReport" class="page-section hidden p-6">
+        <h2 class="text-2xl font-bold mb-6 text-blue-900 border-b border-gray-200 pb-2 no-print flex items-center gap-2">
+          <i class="fas fa-calendar-week text-blue-800"></i>
+          <span>إدخال تقرير أسبوعي</span>
+        </h2>
+        
+        <!-- Input Form -->
+        <div id="daily-form-container" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">تاريخ التقرير الأسبوعي</label>
+                    <input type="date" id="daily-date" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">الفترة</label>
+                    <select id="daily-period" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">القسم</label>
+                    <select id="daily-dept" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition" onchange="renderDailyProcedures(this.value)"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">القائم بالمرور</label>
+                    <select id="daily-inspector" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition"></select>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg mb-2 text-blue-900 border-b pb-2">تقييم إجراءات مكافحة العدوى للأسبوع</h3>
+            <p id="proc-hint" class="text-sm text-gray-500 mb-2">اختر القسم أولاً لعرض الإجراءات المناسبة وتحديد المسؤول عن التنفيذ عند وجود مخالفة</p>
+            <div id="procedures-list" class="space-y-3">
+                <!-- Generated via JS -->
+            </div>
+
+            <div class="mt-8 text-left">
+                <button onclick="submitDailyReport()" class="bg-emerald-600 text-white px-6 py-2.5 rounded shadow hover:bg-emerald-700 transition font-bold flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    <span>حفظ وعرض التقرير الأسبوعي</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Generated Report View (Hidden initially) -->
+        <div id="daily-result-view" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300 shadow-lg print-only">
+            <div class="report-header-bar border-b-2 border-blue-900 pb-2 mb-3 avoid-break">
+                <div id="daily-right-logo-slot" class="report-logo-slot report-logo-slot-right"></div>
+                <div class="text-center flex-1 px-2">
+                    <h1 id="daily-hosp-name" class="text-lg font-bold text-blue-900">مستشفى المنيا الجامعى للعيون</h1>
+                    <h2 class="text-base font-bold text-blue-800">وحدة مكافحة العدوى</h2>
+                    <p class="text-gray-600 text-xs mt-0.5">تقرير مرور أسبوعي</p>
+                </div>
+                <div id="daily-left-logo-slot" class="report-logo-slot report-logo-slot-left"></div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-y-1 gap-x-8 mb-4 text-xs avoid-break">
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">التاريخ:</span> <span id="res-date" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">القسم:</span> <span id="res-dept" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">الفترة:</span> <span id="res-period" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">القائم بالمرور:</span> <span id="res-inspector" class="text-gray-800"></span></p>
+            </div>
+
+            <h3 class="font-bold text-base mb-2 text-blue-900 border-b border-gray-300 pb-1 avoid-break">المخالفات والتوصيات وخطة التنفيذ</h3>
+            <table class="w-full text-xs border-collapse border border-gray-300 mb-6">
+                <thead>
+                    <tr class="bg-blue-50 text-blue-900">
+                        <th class="border border-gray-300 p-2 w-2/5">الملاحظات</th>
+                        <th class="border border-gray-300 p-2 w-2/5">التوصيات</th>
+                        <th class="border border-gray-300 p-2 w-1/5">المسؤول عن التنفيذ</th>
+                    </tr>
+                </thead>
+                <tbody id="res-table-body">
+                    <!-- Failures go here -->
+                </tbody>
+            </table>
+            
+            <div class="mt-4 pt-2 border-t border-gray-400 text-xs text-gray-800 avoid-break">
+                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
+                <div class="text-left font-bold pl-4">
+                    <p id="daily-team-sig">فريق مكافحة العدوى</p>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center no-print flex flex-wrap justify-center gap-2">
+                <button onclick="window.print()" class="manger-hide bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800 transition"><i class="fas fa-print"></i> طباعة PDF</button>
+                <button onclick="exportToWord('daily-result-view', 'WeeklyReport.doc')" class="manger-hide bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-600 transition"><i class="fas fa-file-word"></i> تصدير Word</button>
+                <button onclick="resetDailyForm()" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition">تقرير أسبوعي جديد</button>
+            </div>
+        </div>
+      </section>
+
+      <!-- 4. MONTHLY REPORT -->
+      <section id="monthlyReport" class="page-section hidden p-6">
+        <h2 class="text-2xl font-bold mb-6 text-blue-900 no-print">التقارير الشهرية</h2>
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-200 mb-4 flex flex-wrap gap-4 items-end justify-between no-print">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">اختر الشهر</label>
+                    <input type="month" id="month-picker" class="border border-gray-300 p-2 rounded bg-gray-50 focus:border-blue-500 outline-none">
+                </div>
+                <button onclick="generatePeriodicReport('monthly')" class="bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800 transition flex items-center gap-2">
+                    <i class="fas fa-chart-bar"></i> عرض التقرير
+                </button>
+            </div>
+            <button onclick="openCopyMonthModal()" class="admin-only bg-emerald-700 text-white px-5 py-2 rounded hover:bg-emerald-800 transition flex items-center gap-2 shadow-sm">
+                <i class="fas fa-copy"></i> نسخ تقرير شهري إلى شهر آخر
+            </button>
+        </div>
+
+        <!-- Inline Status Banner for Monthly Report Operations -->
+        <div id="monthly-copy-banner" class="hidden mb-6 p-4 rounded border flex items-center justify-between no-print">
+            <div class="flex items-center gap-3">
+                <i id="monthly-copy-banner-icon" class="fas fa-check-circle text-lg"></i>
+                <span id="monthly-copy-banner-text" class="text-sm font-bold"></span>
+            </div>
+            <button onclick="hideMonthlyBanner()" class="text-gray-500 hover:text-gray-800 px-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="monthly-result" class="hidden bg-white p-8 shadow max-w-5xl mx-auto border border-gray-200">
+           <!-- Dynamic Content -->
+        </div>
+
+        <!-- Copy Monthly Report Modal -->
+        <div id="copy-month-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 no-print">
+            <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md overflow-hidden">
+                <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fas fa-copy"></i> نسخ تقرير شهري
+                    </h3>
+                    <button onclick="closeCopyMonthModal()" class="text-blue-200 hover:text-white transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        يمكنك نسخ جميع تقييمات وملاحظات المرور المسجلة في شهر معين إلى شهر آخر مع ضبط التواريخ تلقائياً.
+                    </p>
+                    <div>
+                        <label class="block text-sm font-bold mb-1 text-gray-800">نسخ من شهر (المصدر)</label>
+                        <input type="month" id="copy-source-month" class="w-full border border-gray-300 p-2.5 rounded bg-gray-50 focus:border-blue-600 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1 text-gray-800">إلى شهر (الهدف)</label>
+                        <input type="month" id="copy-target-month" class="w-full border border-gray-300 p-2.5 rounded bg-gray-50 focus:border-blue-600 outline-none">
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded p-3">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="copy-replace-existing" checked class="mt-1 w-4 h-4 text-emerald-700 rounded border-gray-300 focus:ring-emerald-600">
+                            <span class="text-xs text-amber-900 leading-relaxed font-medium">
+                                استبدال بيانات الشهر الهدف (إن وجدت) لمنع تكرار التقييمات عند النسخ أكثر من مرة.
+                            </span>
+                        </label>
+                    </div>
+                    <div id="copy-month-error" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3 rounded flex items-center gap-2">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="copy-month-error-text"></span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" onclick="closeCopyMonthModal()" class="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-100 transition">
+                        إلغاء
+                    </button>
+                    <button type="button" id="copy-month-submit-btn" onclick="submitCopyMonthlyReport()" class="px-5 py-2 rounded bg-emerald-700 text-white text-sm font-bold hover:bg-emerald-800 transition flex items-center gap-2">
+                        <i class="fas fa-check"></i> تنفيذ النسخ
+                    </button>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- 5. ANNUAL REPORT -->
+      <section id="annualReport" class="page-section hidden p-6">
+        <h2 class="text-2xl font-bold mb-6 text-blue-900 no-print">التقرير السنوي</h2>
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-200 mb-6 flex gap-4 items-end no-print">
+            <div>
+                <label class="block text-sm font-bold mb-1 text-gray-700">اختر السنة</label>
+                <select id="year-picker" class="border border-gray-300 p-2 rounded w-32 bg-gray-50 focus:border-blue-500 outline-none">
+                    <!-- Populated via JS -->
+                </select>
+            </div>
+            <button onclick="generatePeriodicReport('yearly')" class="bg-purple-700 text-white px-6 py-2 rounded hover:bg-purple-800 transition">عرض التقرير</button>
+        </div>
+        <div id="yearly-result" class="hidden bg-white p-8 shadow max-w-5xl mx-auto border border-gray-200"></div>
+      </section>
+      
+      <!-- 6. ARCHIVE -->
+      <section id="archive" class="page-section hidden p-6">
+        <h2 class="text-2xl font-bold mb-6 text-blue-900 no-print">الأرشيف</h2>
+        
+        <!-- Archive Search Form -->
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-200 mb-6 no-print">
+          <div class="flex gap-2 mb-4 border-b border-gray-100 pb-3">
+             <span class="text-sm font-bold text-gray-500 flex items-center ml-2">عرض سريع:</span>
+             <button onclick="quickSetDate('today')" class="px-3 py-1 bg-blue-50 text-blue-700 rounded border border-blue-100 text-xs font-bold hover:bg-blue-100 transition">اليوم</button>
+             <button onclick="quickSetDate('month')" class="px-3 py-1 bg-blue-50 text-blue-700 rounded border border-blue-100 text-xs font-bold hover:bg-blue-100 transition">هذا الشهر</button>
+             <button onclick="quickSetDate('year')" class="px-3 py-1 bg-blue-50 text-blue-700 rounded border border-blue-100 text-xs font-bold hover:bg-blue-100 transition">هذه السنة</button>
+          </div>
+          <div class="flex gap-4 items-end flex-wrap">
+             <div>
+               <label class="block text-sm text-gray-700 font-bold mb-1">من تاريخ</label>
+               <input type="date" id="arch-start" class="border border-gray-300 p-2 rounded bg-gray-50 focus:border-blue-500 outline-none">
+             </div>
+             <div>
+               <label class="block text-sm text-gray-700 font-bold mb-1">إلى تاريخ</label>
+               <input type="date" id="arch-end" class="border border-gray-300 p-2 rounded bg-gray-50 focus:border-blue-500 outline-none">
+             </div>
+             <div>
+               <label class="block text-sm text-gray-700 font-bold mb-1">القسم</label>
+               <select id="arch-dept" class="border border-gray-300 p-2 rounded w-40 bg-gray-50 focus:border-blue-500 outline-none"><option value="">الكل</option></select>
+             </div>
+             <div>
+               <label class="block text-sm text-gray-700 font-bold mb-1">القائم بالمرور</label>
+               <select id="arch-inspector" class="border border-gray-300 p-2 rounded w-40 bg-gray-50 focus:border-blue-500 outline-none"><option value="">الكل</option></select>
+             </div>
+             <button onclick="generateArchive()" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800 transition">بحث</button>
+          </div>
+        </div>
+
+        <!-- Archive Results List -->
+        <div id="archive-result" class="hidden space-y-4"></div>
+
+        <!-- Archive Detail View (Single Report) -->
+        <div id="archive-detail-view" class="hidden bg-white p-8 max-w-4xl mx-auto border border-gray-300 shadow-lg print-only">
+             <!-- Back Button (No Print) -->
+             <div class="text-left mb-4 no-print border-b pb-4">
+                <button onclick="closeArchiveDetail()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition flex items-center gap-2">
+                    <i class="fas fa-arrow-right"></i> عودة للقائمة
+                </button>
+             </div>
+
+             <!-- Header -->
+            <div class="report-header-bar border-b-2 border-blue-900 pb-2 mb-3 avoid-break">
+                <div id="arc-right-logo-slot" class="report-logo-slot report-logo-slot-right"></div>
+                <div class="text-center flex-1 px-2">
+                    <h1 id="arc-res-hosp-name" class="text-lg font-bold text-blue-900">مستشفى المنيا الجامعى للعيون</h1>
+                    <h2 class="text-base font-bold text-blue-800">وحدة مكافحة العدوى</h2>
+                    <p class="text-gray-600 text-xs mt-1">تقرير مرور أسبوعي</p>
+                </div>
+                <div id="arc-left-logo-slot" class="report-logo-slot report-logo-slot-left"></div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-y-1 gap-x-8 mb-4 text-xs avoid-break">
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">التاريخ:</span> <span id="arc-res-date" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">القسم:</span> <span id="arc-res-dept" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">الفترة:</span> <span id="arc-res-period" class="text-gray-800"></span></p>
+                <p class="border-b border-gray-100 py-1"><span class="font-bold text-blue-900">القائم بالمرور:</span> <span id="arc-res-inspector" class="text-gray-800"></span></p>
+            </div>
+
+            <h3 class="font-bold text-base mb-2 text-blue-900 border-b border-gray-300 pb-1 avoid-break">المخالفات والتوصيات وخطة التنفيذ</h3>
+            <table class="w-full text-xs border-collapse border border-gray-300 mb-6">
+                <thead>
+                    <tr class="bg-blue-50 text-blue-900">
+                        <th class="border border-gray-300 p-2 w-2/5">الملاحظات</th>
+                        <th class="border border-gray-300 p-2 w-2/5">التوصيات</th>
+                        <th class="border border-gray-300 p-2 w-1/5">المسؤول عن التنفيذ</th>
+                    </tr>
+                </thead>
+                <tbody id="arc-res-table-body">
+                    <!-- Failures go here -->
+                </tbody>
+            </table>
+            
+            <div class="mt-4 pt-2 border-t border-gray-400 text-xs text-gray-800 avoid-break">
+                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
+                <div class="text-left font-bold pl-4">
+                    <p id="arc-res-team-sig">فريق مكافحة العدوى</p>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center no-print">
+                <button onclick="window.print()" class="manger-hide bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800 transition"><i class="fas fa-print"></i> طباعة PDF</button>
+                <button onclick="exportToWord('archive-detail-view', 'WeeklyArchiveReport.doc')" class="manger-hide bg-blue-700 text-white px-6 py-2 rounded ml-2 hover:bg-blue-600 transition"><i class="fas fa-file-word"></i> تصدير Word</button>
+            </div>
+        </div>
+
+        <!-- Archive Batch Print View (Hidden initially) -->
+        <div id="archive-batch-view" class="hidden print-only-container">
+            <div class="no-print mb-4 border-b pb-4 flex justify-between items-center bg-gray-100 p-4 rounded">
+                <button onclick="closeBatchView()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition flex items-center gap-2">
+                    <i class="fas fa-arrow-right"></i> عودة للقائمة
+                </button>
+                <div class="text-sm text-gray-600 font-bold">معاينة الطباعة المجمعة</div>
+                <div class="flex gap-2">
+                     <button onclick="window.print()" class="manger-hide bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800 transition flex items-center gap-2">
+                        <i class="fas fa-print"></i> طباعة الكل (PDF)
+                    </button>
+                    <button onclick="exportToWord('archive-batch-content', 'BatchReports.doc')" class="manger-hide bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-600 transition flex items-center gap-2">
+                        <i class="fas fa-file-word"></i> تصدير Word
+                    </button>
+                </div>
+            </div>
+            <div id="archive-batch-content">
+                <!-- Dynamic Reports go here -->
+            </div>
+        </div>
+
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-auto py-4 text-center text-gray-500 text-sm no-print border-t border-gray-200">
+        &copy; 2026 Dr. Fady Ezzat. All Rights Reserved
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- JS Logic -->
+  <script>
+    // --- Setup Environment Variables / API URL ---
+    let API_URL = "/api";
+    const USE_SERVER_API = (typeof google === 'undefined');
+    
+    if (USE_SERVER_API) {
+       console.info("Using Full-Stack API at: " + API_URL);
+       
+       // --- Fetch-based Proxy for External Deployment ---
+       const fetchRunner = new Proxy({}, {
+         get: function(target, prop) {
+           if (prop === 'withSuccessHandler') {
+             return function(successCallback) {
+               return new Proxy({}, {
+                 get: function(t, p) {
+                   if (p === 'withFailureHandler') {
+                     return function(failureCallback) {
+                       return new Proxy({}, {
+                         get: function(tt, pp) {
+                           return (...args) => externalApiCall(pp, args, successCallback, failureCallback);
+                         }
+                       });
+                     }
+                   }
+                   return (...args) => externalApiCall(p, args, successCallback, console.error);
+                 }
+               });
+             }
+           }
+           return (...args) => externalApiCall(prop, args, console.log, console.error);
+         }
+       });
+       window.google = { script: { run: fetchRunner } };
+
+       async function externalApiCall(method, args, onSuccess, onFailure) {
+          try {
+              const response = await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ method: method, args: args })
+              });
+              const json = await response.json();
+              if (json.success) {
+                  if (onSuccess) onSuccess(json.data);
+              } else {
+                  throw new Error(json.error || "Unknown server error");
+              }
+          } catch (err) {
+              console.error("External API Error:", err);
+              if (onFailure) onFailure(err);
+          }
+       }
+    }
+
+    // --- Global State ---
+    let settingsData = {};
+    let currentAdminPassword = null;
+    let currentArchiveReports = []; // Store processed archive reports for view details
+
+    // --- Utility: Get Local YYYY-MM-DD ---
+    function getLocalYMD(date) {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().split('T')[0];
+    }
+
+    // --- Google Drive Logo Helpers ---
+    function extractGoogleDriveFileId(rawUrl) {
+        if (!rawUrl || typeof rawUrl !== 'string') return null;
+        const trimmed = rawUrl.trim();
+        if (!trimmed) return null;
+
+        if (trimmed.includes('drive.google.com') || trimmed.includes('googleusercontent.com') || trimmed.includes('docs.google.com')) {
+            const pathMatch = trimmed.match(/\/(?:file\/)?d\/([a-zA-Z0-9_-]{10,})/);
+            if (pathMatch && pathMatch[1]) return pathMatch[1];
+
+            const queryMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+            if (queryMatch && queryMatch[1]) return queryMatch[1];
+        }
+        return null;
+    }
+
+    function resolveLogoSources(rawUrl) {
+        if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
+            return null;
+        }
+        const trimmed = rawUrl.trim();
+        const fileId = extractGoogleDriveFileId(trimmed);
+
+        if (fileId) {
+            const thumbUrl = `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w400`;
+            const lh3Url = `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=w400`;
+            if (USE_SERVER_API) {
+                return {
+                    primary: `${API_URL}/drive-image?id=${encodeURIComponent(fileId)}`,
+                    fb1: thumbUrl,
+                    fb2: lh3Url,
+                    externalUrl: thumbUrl
+                };
+            }
+            return {
+                primary: thumbUrl,
+                fb1: lh3Url,
+                fb2: '',
+                externalUrl: thumbUrl
+            };
+        }
+
+        return {
+            primary: trimmed,
+            fb1: '',
+            fb2: '',
+            externalUrl: trimmed
+        };
+    }
+
+    function escapeHtmlAttr(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function handleLogoImgError(imgEl) {
+        const step = Number(imgEl.dataset.fallbackStep || '0');
+        const fb1 = imgEl.dataset.fb1 || '';
+        const fb2 = imgEl.dataset.fb2 || '';
+        if (step === 0 && fb1 && imgEl.src !== fb1) {
+            imgEl.dataset.fallbackStep = '1';
+            imgEl.src = fb1;
+        } else if (step <= 1 && fb2 && imgEl.src !== fb2) {
+            imgEl.dataset.fallbackStep = '2';
+            imgEl.src = fb2;
+        } else {
+            imgEl.style.display = 'none';
+        }
+    }
+
+    function buildLogoImgHtml(rawUrl, altText) {
+        const sources = resolveLogoSources(rawUrl);
+        if (!sources) return '';
+        return `<img src="${escapeHtmlAttr(sources.primary)}" data-fb1="${escapeHtmlAttr(sources.fb1)}" data-fb2="${escapeHtmlAttr(sources.fb2)}" data-external-url="${escapeHtmlAttr(sources.externalUrl)}" alt="${escapeHtmlAttr(altText)}" class="report-header-logo" onerror="handleLogoImgError(this)">`;
+    }
+
+    function getReportLogoSlotHtml(side) {
+        const rawUrl = side === 'right' ? (settingsData?.rightLogoUrl || '') : (settingsData?.leftLogoUrl || '');
+        const alignClass = side === 'right' ? 'report-logo-slot-right' : 'report-logo-slot-left';
+        const alt = side === 'right' ? 'شعار يمين التقرير' : 'شعار يسار التقرير';
+        return `<div class="report-logo-slot ${alignClass}">${buildLogoImgHtml(rawUrl, alt)}</div>`;
+    }
+
+    function populateReportLogoSlots(rightSlotId, leftSlotId) {
+        const rightSlot = document.getElementById(rightSlotId);
+        const leftSlot = document.getElementById(leftSlotId);
+        if (rightSlot) rightSlot.innerHTML = buildLogoImgHtml(settingsData?.rightLogoUrl || '', 'شعار يمين التقرير');
+        if (leftSlot) leftSlot.innerHTML = buildLogoImgHtml(settingsData?.leftLogoUrl || '', 'شعار يسار التقرير');
+    }
+
+    // --- Export to Word ---
+    function exportToWord(elementId, filename) {
+        const el = document.getElementById(elementId);
+        if(!el) return;
+        
+        // Clone to modify without affecting UI
+        const clone = el.cloneNode(true);
+        
+        // Remove no-print elements from the clone
+        const noPrints = clone.querySelectorAll('.no-print');
+        noPrints.forEach(n => n.remove());
+
+        // Convert flex report-header-bar into Word-friendly 3-column borderless table with bounded logo dimensions
+        clone.querySelectorAll('.report-header-bar').forEach(bar => {
+            const children = Array.from(bar.children);
+            if (children.length === 3) {
+                children.forEach(col => {
+                    col.querySelectorAll('img.report-header-logo').forEach(img => {
+                        const extUrl = img.getAttribute('data-external-url') || img.getAttribute('src') || '';
+                        if (extUrl.startsWith('/')) {
+                            img.setAttribute('src', window.location.origin + extUrl);
+                        } else if (extUrl) {
+                            img.setAttribute('src', extUrl);
+                        }
+                        img.setAttribute('width', '60');
+                        img.setAttribute('height', '60');
+                        img.style.width = '60px';
+                        img.style.height = '60px';
+                        img.style.objectFit = 'contain';
+                    });
+                });
+                const layoutTable = document.createElement('table');
+                layoutTable.className = 'header-layout-table';
+                layoutTable.setAttribute('dir', 'rtl');
+                layoutTable.style.width = '100%';
+                layoutTable.style.border = 'none';
+                layoutTable.style.marginBottom = '8px';
+                layoutTable.style.borderBottom = '2px solid #1e3a8a';
+                layoutTable.innerHTML = `
+                    <tr>
+                        <td style="border:none; width:75px; text-align:right; vertical-align:middle;">${children[0].innerHTML}</td>
+                        <td style="border:none; text-align:center; vertical-align:middle;">${children[1].innerHTML}</td>
+                        <td style="border:none; width:75px; text-align:left; vertical-align:middle;">${children[2].innerHTML}</td>
+                    </tr>
+                `;
+                bar.replaceWith(layoutTable);
+            }
+        });
+        
+        // Build Word-compatible HTML
+        const htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40' dir='rtl'>
+            <head>
+                <meta charset='utf-8'>
+                <title>${filename}</title>
+                <style>
+                    body { font-family: 'Tajawal', 'Arial', sans-serif; text-align: right; direction: rtl; }
+                    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+                    th, td { border: 1px solid #000; padding: 5px; text-align: center; }
+                    table.header-layout-table, table.header-layout-table td { border: none !important; }
+                    th { background-color: #f3f4f6; }
+                    .text-right { text-align: right; }
+                    .text-center { text-align: center; }
+                    .font-bold { font-weight: bold; }
+                    .text-red-700 { color: #b91c1c; }
+                    .text-green-700 { color: #15803d; }
+                    .bg-gray-50 { background-color: #f9fafb; }
+                    .text-blue-900 { color: #1e3a8a; }
+                    /* Header styling emulation */
+                    h1, h2, h3 { margin: 5px 0; text-align: center; color: #1e3a8a; }
+                </style>
+            </head>
+            <body>
+                ${clone.innerHTML}
+            </body>
+            </html>
+        `;
+        
+        const blob = new Blob(['\ufeff', htmlContent], {
+            type: 'application/msword'
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- Navigation ---
+    function nav(pageId) {
+      if (pageId === 'dailyReport' || pageId === 'weeklyReport') {
+        pageId = 'weeklyReport';
+      }
+      if (currentRole === 'manger' && (pageId === 'settings' || pageId === 'weeklyReport' || pageId === 'dailyReport')) return;
+
+      document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+      const page = document.getElementById(pageId);
+      if (page) {
+          page.classList.remove('hidden');
+      } else {
+          console.error("Page not found: " + pageId);
+      }
+      
+      // Close mobile menu if open
+      document.getElementById('mobileMenu').classList.add('hidden');
+
+      if (pageId === 'dashboard') loadDashboard();
+      if (pageId === 'settings') {
+          const banner = document.getElementById('settings-save-banner');
+          if (banner) banner.classList.add('hidden');
+          renderSettingsUI();
+          applyRoleRestrictions();
+          loadStorageStatus();
+      }
+      if (pageId === 'weeklyReport' || pageId === 'dailyReport') initDailyForm();
+      if (pageId === 'monthlyReport') initMonthly();
+      if (pageId === 'annualReport') initAnnual();
+      if (pageId === 'archive') initArchive();
+    }
+
+    // --- Login & Role Logic ---
+    let currentRole = null;
+
+    function submitLogin() {
+      let pass = document.getElementById('login-pass-input').value;
+      if (!pass) return;
+      pass = pass.trim().replace(/[٠-٩]/g, d => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]);
+
+      loading(true);
+      
+      google.script.run.withSuccessHandler(data => {
+        loading(false);
+        settingsData = data || {};
+        const pwds = settingsData.passwords || { admin: 'admin', manger: 'manger', user: 'user' };
+        
+        if (pass === pwds.admin) {
+            currentRole = 'admin';
+            completeLogin();
+        } else if (pass === pwds.manger) {
+            currentRole = 'manger';
+            completeLogin();
+        } else if (pass === pwds.user) {
+            currentRole = 'user';
+            completeLogin();
+        } else {
+            alert("كلمة المرور غير صحيحة");
+        }
+      }).withFailureHandler(err => {
+          loading(false);
+          alert("حدث خطأ في الاتصال: " + err);
+      }).getSettings();
+    }
+
+    function completeLogin() {
+        document.getElementById('login-modal').classList.add('hidden');
+        applyRoleRestrictions();
+        
+        // Pre-load settings UI for roles with settings access (admin & user)
+        if (currentRole === 'admin' || currentRole === 'user') {
+            renderSettingsUI();
+            applyRoleRestrictions();
+        }
+        
+        nav('dashboard');
+    }
+
+    function applyRoleRestrictions() {
+        const navSettings = document.querySelectorAll('.nav-settings');
+        const navDaily = document.querySelectorAll('.nav-daily, .nav-weekly');
+        const mangerHide = document.querySelectorAll('.manger-hide');
+        const adminOnly = document.querySelectorAll('.admin-only');
+        const userOnly = document.querySelectorAll('.user-only');
+        
+        if (currentRole === 'user') {
+            navSettings.forEach(el => el.classList.remove('hidden'));
+            navDaily.forEach(el => el.classList.remove('hidden'));
+            mangerHide.forEach(el => el.classList.remove('hidden'));
+            adminOnly.forEach(el => el.classList.add('hidden'));
+            userOnly.forEach(el => el.classList.remove('hidden'));
+        } else if (currentRole === 'manger') {
+            navSettings.forEach(el => el.classList.add('hidden'));
+            navDaily.forEach(el => el.classList.add('hidden'));
+            mangerHide.forEach(el => el.classList.add('hidden'));
+            adminOnly.forEach(el => el.classList.add('hidden'));
+            userOnly.forEach(el => el.classList.add('hidden'));
+        } else if (currentRole === 'admin') {
+            navSettings.forEach(el => el.classList.remove('hidden'));
+            navDaily.forEach(el => el.classList.remove('hidden'));
+            mangerHide.forEach(el => el.classList.remove('hidden'));
+            adminOnly.forEach(el => el.classList.remove('hidden'));
+            userOnly.forEach(el => el.classList.add('hidden'));
+        }
+    }
+
+    function logout() {
+        currentRole = null;
+        document.getElementById('login-pass-input').value = '';
+        document.getElementById('login-modal').classList.remove('hidden');
+        document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+        document.getElementById('mobileMenu').classList.add('hidden');
+    }
+
+    document.getElementById('login-pass-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') submitLogin();
+    });
+
+    function loading(show) {
+      document.getElementById('loading').classList.toggle('hidden', !show);
+    }
+
+    // --- Settings & Storage Provider Logic ---
+    let currentStorageStatus = null;
+
+    function loadStorageStatus(showNotification = false) {
+      const spinner = document.getElementById('storage-refresh-spinner');
+      if (spinner) spinner.classList.add('fa-spin');
+      
+      google.script.run.withSuccessHandler(status => {
+        if (spinner) spinner.classList.remove('fa-spin');
+        currentStorageStatus = status;
+        renderStorageStatusUI(status);
+        if (showNotification && status) {
+          showSettingsSaveBanner(`تم تحديث حالة الاتصال بمصدر البيانات: ${status.message || ''}`, false);
+        }
+      }).withFailureHandler(err => {
+        if (spinner) spinner.classList.remove('fa-spin');
+        console.error("فشل التحقق من حالة التخزين:", err);
+      }).getStorageStatus();
+    }
+
+    function renderStorageStatusUI(status) {
+      if (!status) return;
+      
+      const badge = document.getElementById('storage-provider-badge');
+      const iconWrap = document.getElementById('storage-provider-icon-wrapper');
+      const icon = document.getElementById('storage-provider-icon');
+      const desc = document.getElementById('storage-provider-desc');
+      const activeName = document.getElementById('storage-active-name');
+      const activeTarget = document.getElementById('storage-active-target');
+      const importBtn = document.getElementById('btn-import-sheets-turso');
+
+      if (!badge || !iconWrap || !icon || !activeName) return;
+
+      if (status.provider === 'turso') {
+        badge.className = 'px-2.5 py-0.5 text-xs rounded-full font-bold bg-indigo-100 text-indigo-900 border border-indigo-300';
+        badge.innerHTML = '<i class="fas fa-database ml-1"></i> قاعدة بيانات Turso (libSQL)';
+        iconWrap.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-700 flex-shrink-0';
+        icon.className = 'fas fa-database text-lg';
+        activeName.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> قاعدة بيانات Turso السحابية';
+        activeTarget.innerText = status.tursoUrlMasked || 'متصل بـ Turso';
+        
+        // If Sheets is also configured, show import button for Admins
+        if (importBtn && status.sheetsConfigured && currentRole === 'admin') {
+          importBtn.classList.remove('hidden');
+        } else if (importBtn) {
+          importBtn.classList.add('hidden');
+        }
+      } else if (status.provider === 'sheets') {
+        badge.className = 'px-2.5 py-0.5 text-xs rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-300';
+        badge.innerHTML = '<i class="fas fa-file-excel ml-1"></i> جداول Google Sheets';
+        iconWrap.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-700 flex-shrink-0';
+        icon.className = 'fas fa-table text-lg';
+        activeName.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> جداول Google Sheets';
+        activeTarget.innerText = status.sheetIdMasked ? `معرّف الجدول: ${status.sheetIdMasked}` : 'Google Sheets API';
+        if (importBtn) importBtn.classList.add('hidden');
+      } else {
+        badge.className = 'px-2.5 py-0.5 text-xs rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300';
+        badge.innerHTML = '<i class="fas fa-hdd ml-1"></i> تخزين محلي مؤقت';
+        iconWrap.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-amber-100 text-amber-700 flex-shrink-0';
+        icon.className = 'fas fa-hdd text-lg';
+        activeName.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> ذاكرة محلية مؤقتة (Local)';
+        activeTarget.innerText = 'ملف محلي (لم يتم ضبط متغيرات Turso أو Sheets)';
+        if (importBtn) importBtn.classList.add('hidden');
+      }
+
+      if (desc && status.message) desc.innerText = status.message;
+    }
+
+    function triggerImportSheetsToTurso() {
+      if (currentRole !== 'admin') {
+        alert('هذا الإجراء متاح لمدير النظام (Admin) فقط.');
+        return;
+      }
+      if (!confirm('هل تريد استيراد ونسخ كافة السجلات والإعدادات من Google Sheets إلى قاعدة بيانات Turso؟\nلن يتم مسح السجلات القديمة في Sheets.')) {
+        return;
+      }
+      loading(true);
+      google.script.run.withSuccessHandler(res => {
+        loading(false);
+        if (res.success) {
+          showSettingsSaveBanner(`تم الاستيراد بنجاح! تم استيراد ${res.importedReports || 0} تقرير إلى Turso.`, false);
+          loadSettings();
+        } else {
+          alert('حدث خطأ أثناء الاستيراد: ' + (res.error || 'خطأ غير معروف'));
+        }
+      }).withFailureHandler(err => {
+        loading(false);
+        alert('فشل الاتصال أثناء الاستيراد: ' + err);
+      }).importGoogleSheetsToTurso();
+    }
+
+    function loadSettings() {
+      loading(true);
+      loadStorageStatus();
+      google.script.run.withSuccessHandler(data => {
+        settingsData = data;
+        renderSettingsUI();
+        loading(false);
+      }).withFailureHandler(err => {
+        loading(false);
+        alert("فشل تحميل الإعدادات: " + err);
+      }).getSettings();
+    }
+
+
+
+    function updateLiveHeaderTitlePreview() {
+      const hospInput = document.getElementById('set-hospital-name');
+      const liveTitle = document.getElementById('live-header-hosp-name');
+      if (hospInput && liveTitle) {
+        liveTitle.innerText = hospInput.value.trim() || 'مستشفى المنيا الجامعى للعيون';
+      }
+    }
+
+    function clearLogoInput(side) {
+      if (currentRole !== 'admin') {
+        showSettingsSaveBanner('عذراً، صلاحية حذف أو مسح الشعارات متاحة لمدير النظام (Admin) فقط.', true);
+        return;
+      }
+      const input = document.getElementById(`set-${side}-logo`);
+      if (input) {
+        input.value = '';
+        updateSettingsLogoPreview(side);
+      }
+    }
+
+    function updateSettingsLogoPreview(side) {
+      const input = document.getElementById(`set-${side}-logo`);
+      const img = document.getElementById(`preview-${side}-logo`);
+      const placeholder = document.getElementById(`placeholder-${side}-logo`);
+      const status = document.getElementById(`status-${side}-logo`);
+      const liveSlot = document.getElementById(`live-header-${side}-slot`);
+      if (!input || !img || !placeholder || !status) return;
+
+      const rawVal = input.value.trim();
+      if (!rawVal) {
+        img.removeAttribute('src');
+        img.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        status.className = 'text-[11px] text-gray-500 mt-1';
+        status.innerText = side === 'right' ? 'اختياري — يظهر أقصى يمين الترويسة' : 'اختياري — يظهر أقصى يسار الترويسة';
+        if (liveSlot) liveSlot.innerHTML = '';
+        return;
+      }
+
+      const sources = resolveLogoSources(rawVal);
+      if (!sources) return;
+
+      status.className = 'text-[11px] text-blue-600 mt-1';
+      status.innerText = 'جاري معاينة الشعار...';
+
+      img.dataset.fallbackStep = '0';
+      img.dataset.fb1 = sources.fb1 || '';
+      img.dataset.fb2 = sources.fb2 || '';
+      img.src = sources.primary;
+
+      if (liveSlot) {
+        liveSlot.innerHTML = buildLogoImgHtml(rawVal, side === 'right' ? 'شعار يمين التقرير' : 'شعار يسار التقرير');
+      }
+    }
+
+    function onPreviewLogoLoad(side) {
+      const img = document.getElementById(`preview-${side}-logo`);
+      const placeholder = document.getElementById(`placeholder-${side}-logo`);
+      const status = document.getElementById(`status-${side}-logo`);
+      if (img) img.classList.remove('hidden');
+      if (placeholder) placeholder.classList.add('hidden');
+      if (status) {
+        status.className = 'text-[11px] text-emerald-700 font-bold mt-1';
+        status.innerText = 'تم تحميل الشعار بنجاح وملائمته للترويسة';
+      }
+    }
+
+    function onPreviewLogoError(side) {
+      const img = document.getElementById(`preview-${side}-logo`);
+      const placeholder = document.getElementById(`placeholder-${side}-logo`);
+      const status = document.getElementById(`status-${side}-logo`);
+      if (!img) return;
+
+      const step = Number(img.dataset.fallbackStep || '0');
+      const fb1 = img.dataset.fb1 || '';
+      const fb2 = img.dataset.fb2 || '';
+      if (step === 0 && fb1 && img.src !== fb1) {
+        img.dataset.fallbackStep = '1';
+        img.src = fb1;
+        return;
+      }
+      if (step <= 1 && fb2 && img.src !== fb2) {
+        img.dataset.fallbackStep = '2';
+        img.src = fb2;
+        return;
+      }
+
+      img.classList.add('hidden');
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (status) {
+        status.className = 'text-[11px] text-red-600 font-bold mt-1';
+        status.innerText = 'تعذر تحميل الصورة — تأكد أن صلاحية الملف في جوجل درايف (أي شخص لديه الرابط)';
+      }
+    }
+
+    function showSettingsSaveBanner(msg, isError = false) {
+      const banner = document.getElementById('settings-save-banner');
+      const icon = document.getElementById('settings-save-banner-icon');
+      const text = document.getElementById('settings-save-banner-text');
+      if (!banner || !icon || !text) return;
+      banner.className = isError
+        ? 'mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-800 text-sm font-bold flex items-center justify-between'
+        : 'mb-4 p-3 rounded border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm font-bold flex items-center justify-between';
+      icon.className = isError ? 'fas fa-exclamation-circle text-red-600' : 'fas fa-check-circle text-emerald-600';
+      text.innerText = msg;
+      banner.classList.remove('hidden');
+    }
+
+    // Prevent clipboard copy/cut inside Settings for 'user' role (paste remains enabled for Google Drive links)
+    const settingsSectionEl = document.getElementById('settings');
+    if (settingsSectionEl) {
+      ['copy', 'cut'].forEach(evtName => {
+        settingsSectionEl.addEventListener(evtName, function (e) {
+          if (currentRole === 'user') {
+            e.preventDefault();
+            showSettingsSaveBanner('عذراً، صلاحية النسخ أو القص غير متاحة لحساب User.', true);
+          }
+        });
+      });
+    }
+
+    function renderSettingsUI() {
+      document.getElementById('set-hospital-name').value = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+      document.getElementById('set-team-signature').value = settingsData.teamSignature || 'فريق مكافحة العدوى';
+      document.getElementById('set-manager-signature').value = settingsData.managerSignature || 'مدير عام المستشفى';
+      document.getElementById('set-right-logo').value = settingsData.rightLogoUrl || '';
+      document.getElementById('set-left-logo').value = settingsData.leftLogoUrl || '';
+      updateLiveHeaderTitlePreview();
+      updateSettingsLogoPreview('right');
+      updateSettingsLogoPreview('left');
+      
+      if (currentRole === 'admin') {
+        const pwds = settingsData.passwords || { admin: 'admin', manger: 'manger', user: 'user' };
+        document.getElementById('pass-admin').value = pwds.admin;
+        document.getElementById('pass-manger').value = pwds.manger;
+        document.getElementById('pass-user').value = pwds.user;
+      } else {
+        document.getElementById('pass-admin').value = '';
+        document.getElementById('pass-manger').value = '';
+        document.getElementById('pass-user').value = '';
+      }
+
+      document.getElementById('set-depts').value = (settingsData.departments || []).join('\n');
+      document.getElementById('set-periods').value = (settingsData.periods || []).join('\n');
+      document.getElementById('set-inspectors').value = (settingsData.inspectors || []).join('\n');
+      
+      const tbody = document.getElementById('proc-table-body');
+      tbody.innerHTML = '';
+      (settingsData.procedures || []).forEach((proc) => {
+        addProcRow(proc.name, proc.note, proc.rec, proc.responsible || proc.resp || '', proc.depts, true);
+      });
+    }
+
+    function removeProcedureRow(btn) {
+      const tr = btn.closest('tr');
+      if (!tr) return;
+      if (currentRole !== 'admin' && tr.dataset.existing === 'true') {
+        showSettingsSaveBanner('عذراً، صلاحية حذف الإجراءات المسجلة متاحة لمدير النظام (Admin) فقط.', true);
+        return;
+      }
+      tr.remove();
+    }
+
+    function addProcRow(name='', note='', rec='', responsible='', depts=[], isExisting=false) {
+      const tbody = document.getElementById('proc-table-body');
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-gray-50";
+      tr.dataset.existing = isExisting ? 'true' : 'false';
+      
+      let deptsHtml = `<div class="bg-white border border-gray-400 p-2 rounded text-xs checkbox-list proc-depts-container h-24 overflow-y-auto">`;
+      (settingsData.departments || []).forEach(dept => {
+          const isChecked = (depts && depts.includes(dept)) ? 'checked' : '';
+          deptsHtml += `<label class="flex items-center mb-1"><input type="checkbox" value="${dept}" ${isChecked} class="mr-1 dept-checkbox">${dept}</label>`;
+      });
+      deptsHtml += `</div>`;
+
+      let actionCellHtml = '';
+      if (currentRole === 'admin') {
+        actionCellHtml = `<button type="button" onclick="removeProcedureRow(this)" class="text-red-500 hover:text-red-700" title="حذف الإجراء"><i class="fas fa-trash"></i></button>`;
+      } else if (isExisting) {
+        actionCellHtml = `<span class="text-gray-400 text-xs inline-block py-1" title="الحذف مغلق لصلاحية User"><i class="fas fa-lock"></i></span>`;
+      } else {
+        actionCellHtml = `<button type="button" onclick="removeProcedureRow(this)" class="text-gray-500 hover:text-gray-700 text-[11px] font-bold" title="إلغاء السطر الجديد قبل الحفظ">إلغاء</button>`;
+      }
+
+      tr.innerHTML = `
+        <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-1 rounded proc-name bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="اسم الإجراء"></td>
+        <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-1 rounded proc-note bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="الملاحظة"></td>
+        <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-1 rounded proc-rec bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="التوصية"></td>
+        <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-1 rounded proc-resp bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="المسؤول عن التنفيذ"></td>
+        <td class="p-2 border border-gray-200 align-top w-48">${deptsHtml}</td>
+        <td class="p-2 border border-gray-200 align-top text-center">${actionCellHtml}</td>
+      `;
+      tr.querySelector('.proc-name').value = name || '';
+      tr.querySelector('.proc-note').value = note || '';
+      tr.querySelector('.proc-rec').value = rec || '';
+      tr.querySelector('.proc-resp').value = responsible || '';
+      tbody.appendChild(tr);
+    }
+    
+    function importBulkProcedures() {
+      if (currentRole !== 'admin') {
+        showSettingsSaveBanner('عذراً، صلاحية النسخ السريع متاحة لمدير النظام (Admin) فقط.', true);
+        return;
+      }
+      const raw = document.getElementById('bulk-proc-input').value;
+      if (!raw.trim()) {
+        showSettingsSaveBanner("الرجاء لصق البيانات أولاً", true);
+        return;
+      }
+      
+      const rows = raw.split('\n');
+      let count = 0;
+      
+      rows.forEach(row => {
+          if (!row.trim()) return;
+          // Excel copy-paste creates Tab separated values
+          const cols = row.split('\t'); 
+          
+          // Col 0: Name, Col 1: Note, Col 2: Recommendation, Col 3: Responsible Officer
+          const name = cols[0] ? cols[0].trim() : '';
+          const note = cols[1] ? cols[1].trim() : '';
+          const rec  = cols[2] ? cols[2].trim() : '';
+          const resp = cols[3] ? cols[3].trim() : '';
+          
+          if (name) {
+              addProcRow(name, note, rec, resp, [], false);
+              count++;
+          }
+      });
+      
+      document.getElementById('bulk-proc-input').value = '';
+      showSettingsSaveBanner(`تم إضافة ${count} إجراء بنجاح. راجع القائمة ثم اضغط 'حفظ التغييرات'.`);
+    }
+
+    function saveSettings() {
+      if (currentRole !== 'admin' && currentRole !== 'user') return;
+
+      const sanitizePass = (val) => val.trim().replace(/[٠-٩]/g, d => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]);
+      const newDepts = document.getElementById('set-depts').value.split('\n').map(x => x.trim()).filter(Boolean);
+      const newPeriods = document.getElementById('set-periods').value.split('\n').map(x => x.trim()).filter(Boolean);
+      const newInspectors = document.getElementById('set-inspectors').value.split('\n').map(x => x.trim()).filter(Boolean);
+      const rightLogoVal = document.getElementById('set-right-logo').value.trim();
+      const leftLogoVal = document.getElementById('set-left-logo').value.trim();
+
+      // Enforce No-Delete Governance for 'user' role
+      if (currentRole === 'user') {
+        if ((settingsData.rightLogoUrl || '').trim() && !rightLogoVal) {
+          showSettingsSaveBanner('عذراً، صلاحية حذف الشعار الأيمن غير متاحة لحساب User (يمكنك استبدال الرابط فقط).', true);
+          return;
+        }
+        if ((settingsData.leftLogoUrl || '').trim() && !leftLogoVal) {
+          showSettingsSaveBanner('عذراً، صلاحية حذف الشعار الأيسر غير متاحة لحساب User (يمكنك استبدال الرابط فقط).', true);
+          return;
+        }
+
+        const deletedDepts = (settingsData.departments || []).filter(d => !newDepts.includes(d));
+        if (deletedDepts.length > 0) {
+          showSettingsSaveBanner(`عذراً، صلاحية الحذف غير متاحة لحساب User — لا يمكن حذف الأقسام المسجلة مسبقاً: (${deletedDepts.join('، ')})`, true);
+          return;
+        }
+
+        const deletedPeriods = (settingsData.periods || []).filter(p => !newPeriods.includes(p));
+        if (deletedPeriods.length > 0) {
+          showSettingsSaveBanner(`عذراً، صلاحية الحذف غير متاحة لحساب User — لا يمكن حذف فترات المرور المسجلة مسبقاً: (${deletedPeriods.join('، ')})`, true);
+          return;
+        }
+
+        const deletedInspectors = (settingsData.inspectors || []).filter(i => !newInspectors.includes(i));
+        if (deletedInspectors.length > 0) {
+          showSettingsSaveBanner(`عذراً، صلاحية الحذف غير متاحة لحساب User — لا يمكن حذف القائمين بالمرور المسجلين مسبقاً: (${deletedInspectors.join('، ')})`, true);
+          return;
+        }
+
+        const existingRows = document.querySelectorAll('#proc-table-body tr[data-existing="true"]');
+        if (existingRows.length < (settingsData.procedures || []).length) {
+          showSettingsSaveBanner('عذراً، صلاحية حذف الإجراءات المسجلة مسبقاً غير متاحة لحساب User.', true);
+          return;
+        }
+        for (const tr of existingRows) {
+          const procNameVal = tr.querySelector('.proc-name').value.trim();
+          if (!procNameVal) {
+            showSettingsSaveBanner('عذراً، لا يمكن حذف أو تفريغ اسم إجراء مسجل مسبقاً (صلاحية الحذف مغلقة لحساب User).', true);
+            return;
+          }
+        }
+      }
+
+      const resolvedPasswords = currentRole === 'admin'
+        ? {
+            admin: sanitizePass(document.getElementById('pass-admin').value) || 'admin',
+            manger: sanitizePass(document.getElementById('pass-manger').value) || 'manger',
+            user: sanitizePass(document.getElementById('pass-user').value) || 'user'
+          }
+        : (settingsData.passwords || { admin: 'admin', manger: 'manger', user: 'user' });
+
+      const newSettings = {
+        hospitalName: document.getElementById('set-hospital-name').value.trim() || settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون',
+        teamSignature: document.getElementById('set-team-signature').value.trim() || settingsData.teamSignature || 'فريق مكافحة العدوى',
+        managerSignature: document.getElementById('set-manager-signature').value.trim() || settingsData.managerSignature || 'مدير عام المستشفى',
+        rightLogoUrl: rightLogoVal,
+        leftLogoUrl: leftLogoVal,
+        passwords: resolvedPasswords,
+        departments: newDepts,
+        periods: newPeriods,
+        inspectors: newInspectors,
+        procedures: []
+      };
+
+      document.querySelectorAll('#proc-table-body tr').forEach(tr => {
+        const name = tr.querySelector('.proc-name').value.trim();
+        if (!name) return;
+        const selectedDepts = [];
+        tr.querySelectorAll('.dept-checkbox:checked').forEach(cb => selectedDepts.push(cb.value));
+        newSettings.procedures.push({
+          name: name,
+          note: tr.querySelector('.proc-note').value,
+          rec: tr.querySelector('.proc-rec').value,
+          responsible: tr.querySelector('.proc-resp')?.value.trim() || '',
+          depts: selectedDepts
+        });
+      });
+
+      loading(true);
+      google.script.run.withSuccessHandler(() => {
+        loading(false);
+        settingsData = newSettings;
+        renderSettingsUI();
+        applyRoleRestrictions();
+        showSettingsSaveBanner('تم حفظ الإعدادات بنجاح');
+      }).withFailureHandler(e => {
+        loading(false);
+        showSettingsSaveBanner('خطأ أثناء حفظ الإعدادات: ' + (e.message || e), true);
+      }).saveSettingsData(newSettings, currentRole);
+    }
+
+    // --- Weekly Report Logic ---
+    function initDailyForm() {
+      if (!settingsData.departments) {
+        google.script.run.withSuccessHandler(data => {
+            settingsData = data;
+            populateDailyDropdowns();
+        }).withFailureHandler(err => console.error(err)).getSettings();
+      } else {
+        populateDailyDropdowns();
+      }
+      // Set default to today
+      const dateEl = document.getElementById('daily-date');
+      if (dateEl) dateEl.value = getLocalYMD(new Date());
+    }
+    const initWeeklyForm = initDailyForm;
+
+    function populateDailyDropdowns() {
+        const fill = (id, arr) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = '<option value="">-- اختر --</option>' + (arr || []).map(x => `<option value="${x}">${x}</option>`).join('');
+        };
+        fill('daily-period', settingsData.periods);
+        fill('daily-dept', settingsData.departments);
+        fill('daily-inspector', settingsData.inspectors);
+        const listEl = document.getElementById('procedures-list');
+        if (listEl) listEl.innerHTML = '';
+        const hintEl = document.getElementById('proc-hint');
+        if (hintEl) hintEl.classList.remove('hidden');
+    }
+    const populateWeeklyDropdowns = populateDailyDropdowns;
+
+    function toggleProcFailInputs(idx, status) {
+        const failBox = document.getElementById(`fail_inputs_${idx}`);
+        if (!failBox) return;
+        if (status === 'No') {
+            failBox.classList.remove('hidden');
+        } else {
+            failBox.classList.add('hidden');
+        }
+    }
+
+    function renderDailyProcedures(selectedDept) {
+        const list = document.getElementById('procedures-list');
+        const hint = document.getElementById('proc-hint');
+        list.innerHTML = '';
+        
+        if (!selectedDept) {
+            hint.classList.remove('hidden');
+            return;
+        }
+        
+        hint.classList.add('hidden');
+        let found = false;
+        (settingsData.procedures || []).forEach((proc, idx) => {
+            const applies = (!proc.depts || proc.depts.length === 0 || proc.depts.includes(selectedDept));
+            if (applies) {
+                found = true;
+                const div = document.createElement('div');
+                div.className = "bg-gray-50 p-3.5 rounded-lg border border-gray-200 flex flex-col gap-2.5 transition";
+                div.innerHTML = `
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="font-bold text-gray-800 text-sm md:w-1/3 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
+                            <span>${proc.name}</span>
+                        </div>
+                        <div class="flex gap-4 items-center bg-white px-3 py-1.5 rounded border border-gray-200 shrink-0">
+                            <label class="flex items-center text-xs md:text-sm font-semibold cursor-pointer">
+                                <input type="radio" name="proc_${idx}" value="Yes" onchange="toggleProcFailInputs(${idx}, this.value)" class="mr-1 accent-emerald-600"> نعم
+                            </label>
+                            <label class="flex items-center text-xs md:text-sm font-semibold cursor-pointer text-red-700">
+                                <input type="radio" name="proc_${idx}" value="No" onchange="toggleProcFailInputs(${idx}, this.value)" class="mr-1 accent-red-600"> لا (مخالفة)
+                            </label>
+                            <label class="flex items-center text-xs md:text-sm font-semibold cursor-pointer text-gray-500">
+                                <input type="radio" name="proc_${idx}" value="NA" onchange="toggleProcFailInputs(${idx}, this.value)" class="mr-1 accent-gray-500" checked> غير مطابق
+                            </label>
+                        </div>
+                    </div>
+                    <div id="fail_inputs_${idx}" class="hidden bg-red-50/70 p-3 rounded-lg border border-red-200 grid grid-cols-1 md:grid-cols-3 gap-2.5 mt-1">
+                        <div>
+                            <label class="block text-[11px] font-bold text-red-900 mb-1">الملاحظة (المخالفة)</label>
+                            <input type="text" id="note_${idx}" placeholder="سجل الملاحظة أو المخالفة" class="w-full border border-gray-400 p-1.5 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500" value="${proc.note || ''}">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-red-900 mb-1">التوصية</label>
+                            <input type="text" id="rec_${idx}" placeholder="سجل التوصية المقترحة" class="w-full border border-gray-400 p-1.5 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500" value="${proc.rec || ''}">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-red-900 mb-1">المسؤول عن التنفيذ</label>
+                            <input type="text" id="resp_${idx}" placeholder="اسم أو صفة المسؤول عن التنفيذ" class="w-full border border-gray-400 p-1.5 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500" value="${proc.responsible || proc.resp || ''}">
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            }
+        });
+        if (!found) list.innerHTML = '<p class="text-center text-gray-500 p-4">لا توجد إجراءات مسجلة لهذا القسم</p>';
+    }
+    const renderWeeklyProcedures = renderDailyProcedures;
+
+    function submitDailyReport() {
+        const formData = {
+            date: document.getElementById('daily-date').value,
+            period: document.getElementById('daily-period').value,
+            department: document.getElementById('daily-dept').value,
+            inspector: document.getElementById('daily-inspector').value,
+            supervisor: document.getElementById('daily-supervisor')?.value || '',
+            evaluations: []
+        };
+
+        if(!formData.date || !formData.department) { alert('أكمل البيانات الأساسية (التاريخ والقسم)'); return; }
+
+        let yesCount = 0, noCount = 0;
+        const radioGroups = document.querySelectorAll('#procedures-list input[type="radio"]:checked');
+        
+        radioGroups.forEach(radio => {
+             const nameAttr = radio.name;
+             const idx = nameAttr.split('_')[1];
+             const proc = (settingsData.procedures || [])[idx];
+             if (!proc) return;
+             const status = radio.value;
+             let note = '', rec = '', resp = '';
+             
+             if (status === 'Yes') yesCount++;
+             if (status === 'No') {
+                 noCount++;
+                 note = document.getElementById(`note_${idx}`)?.value || '';
+                 rec = document.getElementById(`rec_${idx}`)?.value || '';
+                 resp = document.getElementById(`resp_${idx}`)?.value || (proc.responsible || proc.resp || '');
+             }
+             
+             formData.evaluations.push({
+                 procedure: proc.name,
+                 status: status,
+                 note: note,
+                 rec: rec,
+                 responsible: resp
+             });
+        });
+
+        const total = yesCount + noCount;
+        const score = total === 0 ? 0 : Math.round((yesCount / total) * 100);
+
+        loading(true);
+        google.script.run.withSuccessHandler(() => {
+            loading(false);
+            cachedDashboardData = null;
+            showDailyResult(formData, score);
+        }).withFailureHandler(err => {
+            loading(false);
+            alert('خطأ في حفظ التقرير: ' + err);
+        }).saveWeeklyReport(formData);
+    }
+    const submitWeeklyReport = submitDailyReport;
+
+    function showDailyResult(data, score) {
+        document.getElementById('daily-form-container').classList.add('hidden');
+        document.getElementById('daily-result-view').classList.remove('hidden');
+
+        populateReportLogoSlots('daily-right-logo-slot', 'daily-left-logo-slot');
+        document.getElementById('daily-hosp-name').innerText = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+        document.getElementById('daily-team-sig').innerText = settingsData.teamSignature || 'فريق مكافحة العدوى';
+        document.getElementById('res-date').innerText = data.date;
+        document.getElementById('res-dept').innerText = data.department;
+        document.getElementById('res-period').innerText = data.period;
+        document.getElementById('res-inspector').innerText = data.inspector;
+        const resSupervisorEl = document.getElementById('res-supervisor');
+        if (resSupervisorEl) resSupervisorEl.innerText = data.supervisor || '-';
+        
+        const tbody = document.getElementById('res-table-body');
+        tbody.innerHTML = '';
+        const failures = data.evaluations.filter(e => e.status === 'No');
+        if (failures.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-emerald-700 font-bold border border-gray-300">لا توجد مخالفات مسجلة - تم استيفاء جميع إجراءات مكافحة العدوى</td></tr>';
+        } else {
+            failures.forEach(e => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="border border-gray-300 p-2 text-red-700 font-medium">${e.note || '-'}</td>
+                        <td class="border border-gray-300 p-2">${e.rec || '-'}</td>
+                        <td class="border border-gray-300 p-2 font-bold text-gray-800">${e.responsible || '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+    const showWeeklyResult = showDailyResult;
+
+    function resetDailyForm() {
+        document.getElementById('daily-form-container').classList.remove('hidden');
+        document.getElementById('daily-result-view').classList.add('hidden');
+        const dateEl = document.getElementById('daily-date');
+        if (dateEl) dateEl.value = getLocalYMD(new Date());
+        initDailyForm();
+    }
+    const resetWeeklyForm = resetDailyForm;
+
+    // --- Periodic Reports (Monthly / Annual) ---
+    function initMonthly() {
+        hideMonthlyBanner();
+        const picker = document.getElementById('month-picker');
+        if (!picker.value) {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            picker.value = `${y}-${m}`;
+        }
+    }
+
+    function initAnnual() {
+        const select = document.getElementById('year-picker');
+        const currentYear = new Date().getFullYear();
+        select.innerHTML = '';
+        
+        // Populate 2 years before and 2 years after
+        for(let i = currentYear - 2; i <= currentYear + 2; i++) {
+             const opt = document.createElement('option');
+             opt.value = i;
+             opt.innerText = i;
+             if(i === currentYear) opt.selected = true;
+             select.appendChild(opt);
+        }
+    }
+
+    function generatePeriodicReport(type, preserveBanner = false) {
+        const val = type === 'monthly' ? document.getElementById('month-picker').value : document.getElementById('year-picker').value;
+        if (!val) {
+            if (type === 'monthly') showMonthlyBanner('يرجى اختيار الشهر أولاً لعرض التقرير.', true);
+            else alert('اختر التاريخ');
+            return;
+        }
+        if (type === 'monthly' && !preserveBanner) hideMonthlyBanner();
+
+        loading(true);
+        google.script.run.withSuccessHandler(dataRows => {
+            loading(false);
+            processPeriodicData(dataRows, type, val);
+        }).withFailureHandler(err => {
+            loading(false);
+            if (type === 'monthly') showMonthlyBanner('خطأ في جلب التقرير: ' + err, true);
+            else alert('خطأ في جلب التقرير: ' + err);
+        }).getReportData(type, val);
+    }
+
+    function processPeriodicData(rows, type, dateVal) {
+        if(rows.length === 0) {
+            if (type === 'monthly') {
+                document.getElementById('monthly-result').classList.add('hidden');
+                showMonthlyBanner(`لا توجد بيانات مسجلة لشهر (${dateVal}).`, true);
+            } else {
+                alert('لا توجد بيانات لهذه الفترة');
+            }
+            return;
+        }
+
+        let totalYes = 0, totalNo = 0;
+        rows.forEach(r => {
+            if(r[8] === 'Yes') totalYes++;
+            if(r[8] === 'No') totalNo++;
+        });
+
+        // Build lookup map for default responsible officer per procedure
+        const procMap = {};
+        if (settingsData?.procedures && Array.isArray(settingsData.procedures)) {
+            settingsData.procedures.forEach(p => {
+                if (p && p.name) procMap[p.name] = p.responsible || p.resp || '';
+            });
+        }
+
+        const depts = {}; 
+        rows.forEach(r => {
+            const d = r[4];
+            const status = r[8];
+            const note = r[9];
+            const rec = r[10];
+            const resp = r[11] || procMap[r[7]] || '-';
+
+            if(!depts[d]) depts[d] = {yes:0, no:0, notes:{}};
+            if(status === 'Yes') depts[d].yes++;
+            if(status === 'No') {
+                depts[d].no++;
+                const noteKey = note || r[7] || '';
+                if(noteKey) {
+                    if(!depts[d].notes[noteKey]) {
+                        depts[d].notes[noteKey] = {count:0, rec: rec || '-', responsible: resp};
+                    } else {
+                        if ((!depts[d].notes[noteKey].responsible || depts[d].notes[noteKey].responsible === '-') && resp && resp !== '-') {
+                            depts[d].notes[noteKey].responsible = resp;
+                        }
+                        if ((!depts[d].notes[noteKey].rec || depts[d].notes[noteKey].rec === '-') && rec && rec !== '-') {
+                            depts[d].notes[noteKey].rec = rec;
+                        }
+                    }
+                    depts[d].notes[noteKey].count++;
+                }
+            }
+        });
+
+        const container = type === 'monthly' ? document.getElementById('monthly-result') : document.getElementById('yearly-result');
+        container.classList.remove('hidden');
+        const title = type === 'monthly' ? `تقرير شهر: ${dateVal}` : `تقرير عام: ${dateVal}`;
+        const threshold = type === 'monthly' ? 5 : 15;
+
+        const hospName = settingsData?.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        const managerSig = settingsData?.managerSignature || 'مدير عام المستشفى';
+        
+        let html = `
+            <div class="report-header-bar mb-2 border-b-2 border-gray-800 pb-2 avoid-break">
+                ${getReportLogoSlotHtml('right')}
+                <div class="text-center flex-1 px-2">
+                    <h1 class="text-lg font-bold text-gray-900">${hospName}</h1>
+                    <h2 class="text-base font-bold text-gray-800">وحدة مكافحة العدوى</h2>
+                    <p class="text-sm text-gray-700 mt-1">${title}</p>
+                </div>
+                ${getReportLogoSlotHtml('left')}
+            </div>
+            <div class="mb-4 text-left no-print flex flex-wrap gap-2">
+                <button onclick="window.print()" class="manger-hide bg-gray-800 text-white px-5 py-2 rounded hover:bg-gray-700 shadow flex items-center gap-2 transition">
+                    <i class="fas fa-print"></i> طباعة PDF
+                </button>
+                <button onclick="exportToWord('${type === 'monthly' ? 'monthly-result' : 'yearly-result'}', '${type}-Report.doc')" class="manger-hide bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-600 shadow flex items-center gap-2 transition">
+                    <i class="fas fa-file-word"></i> تصدير Word
+                </button>
+                ${type === 'monthly' ? `
+                <button onclick="openCopyMonthModal('${dateVal}')" class="admin-only bg-emerald-700 text-white px-5 py-2 rounded hover:bg-emerald-800 shadow flex items-center gap-2 transition">
+                    <i class="fas fa-copy"></i> نسخ هذا الشهر إلى شهر آخر
+                </button>
+                ` : ''}
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse border border-gray-800 shadow-sm bg-white" dir="rtl">
+                    <thead class="bg-gray-200 text-gray-900">
+                        <tr>
+                            <th class="border border-gray-600 p-2 text-right font-bold w-1/5 text-sm">القسم</th>
+                            <th class="border border-gray-600 p-2 text-right font-bold w-2/5 text-sm">الملاحظات</th>
+                            <th class="border border-gray-600 p-2 text-right font-bold w-1/4 text-sm">التوصيات</th>
+                            <th class="border border-gray-600 p-2 text-right font-bold w-1/5 text-sm">المسؤول عن التنفيذ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-900">
+        `;
+
+        Object.keys(depts).forEach(dName => {
+            const d = depts[dName];
+            const freqNotes = [];
+            Object.keys(d.notes).forEach(nTxt => {
+                if(d.notes[nTxt].count > threshold) {
+                    freqNotes.push({txt: nTxt, rec: d.notes[nTxt].rec, responsible: d.notes[nTxt].responsible || '-'});
+                }
+            });
+
+            // If no notes exceeded the high recurrence threshold, show all notes for this department so findings and responsible officers are clearly presented
+            if (freqNotes.length === 0 && Object.keys(d.notes).length > 0) {
+                Object.keys(d.notes).forEach(nTxt => {
+                    freqNotes.push({txt: nTxt, rec: d.notes[nTxt].rec, responsible: d.notes[nTxt].responsible || '-'});
+                });
+            }
+
+            if (freqNotes.length > 0) {
+                 html += `<tr class="hover:bg-gray-50 group">
+                     <td class="border border-gray-600 p-2 font-bold align-top bg-gray-50 text-sm" rowspan="${freqNotes.length}">${dName}</td>
+                     <td class="border border-gray-600 p-2 text-red-700 align-top font-medium">${freqNotes[0].txt}</td>
+                     <td class="border border-gray-600 p-2 align-top font-medium">${freqNotes[0].rec}</td>
+                     <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${freqNotes[0].responsible || '-'}</td>
+                 </tr>`;
+                 for(let i=1; i<freqNotes.length; i++) {
+                     html += `<tr class="hover:bg-gray-50 group">
+                         <td class="border border-gray-600 p-2 text-red-700 align-top font-medium">${freqNotes[i].txt}</td>
+                         <td class="border border-gray-600 p-2 align-top font-medium">${freqNotes[i].rec}</td>
+                         <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${freqNotes[i].responsible || '-'}</td>
+                     </tr>`;
+                 }
+            } else {
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="border border-gray-600 p-2 font-bold bg-gray-50 text-sm">${dName}</td>
+                    <td class="border border-gray-600 p-2 text-gray-400 text-center">-</td>
+                    <td class="border border-gray-600 p-2 text-gray-400 text-center">-</td>
+                    <td class="border border-gray-600 p-2 text-gray-400 text-center">-</td>
+                </tr>`;
+            }
+        });
+
+        html += `</tbody></table></div>`;
+        html += `
+            <div class="mt-6 flex justify-between items-end text-center text-sm font-bold text-gray-900 page-break-inside-avoid print-only avoid-break px-10">
+                <div class="flex flex-col items-center">
+                    <div class="mb-4">${teamSig}</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="mb-4">${managerSig}</div>
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+        applyRoleRestrictions();
+    }
+
+    // --- Copy Monthly Report Modal & Logic ---
+    function getNextMonthStr(ymStr) {
+        if (!ymStr || !ymStr.includes('-')) {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
+        const [y, m] = ymStr.split('-').map(Number);
+        const nextDate = new Date(y, m, 1); // m is 1-based, so month index m is next month
+        return `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function showMonthlyBanner(message, isError = false) {
+        const banner = document.getElementById('monthly-copy-banner');
+        const icon = document.getElementById('monthly-copy-banner-icon');
+        const text = document.getElementById('monthly-copy-banner-text');
+        if (!banner || !icon || !text) return;
+
+        banner.className = isError
+            ? 'mb-6 p-4 rounded border border-red-200 bg-red-50 text-red-800 flex items-center justify-between no-print'
+            : 'mb-6 p-4 rounded border border-emerald-200 bg-emerald-50 text-emerald-800 flex items-center justify-between no-print';
+        icon.className = isError ? 'fas fa-exclamation-circle text-lg text-red-600' : 'fas fa-check-circle text-lg text-emerald-600';
+        text.innerText = message;
+        banner.classList.remove('hidden');
+    }
+
+    function hideMonthlyBanner() {
+        const banner = document.getElementById('monthly-copy-banner');
+        if (banner) banner.classList.add('hidden');
+    }
+
+    function openCopyMonthModal(prefillSource) {
+        if (currentRole !== 'admin') return;
+        const currentPicked = prefillSource || document.getElementById('month-picker').value;
+        const srcInput = document.getElementById('copy-source-month');
+        const tgtInput = document.getElementById('copy-target-month');
+        const errBox = document.getElementById('copy-month-error');
+
+        srcInput.value = currentPicked || '';
+        tgtInput.value = getNextMonthStr(currentPicked);
+        document.getElementById('copy-replace-existing').checked = true;
+        errBox.classList.add('hidden');
+
+        document.getElementById('copy-month-modal').classList.remove('hidden');
+    }
+
+    function closeCopyMonthModal() {
+        document.getElementById('copy-month-modal').classList.add('hidden');
+    }
+
+    function showCopyModalError(msg) {
+        const errBox = document.getElementById('copy-month-error');
+        const errText = document.getElementById('copy-month-error-text');
+        errText.innerText = msg;
+        errBox.classList.remove('hidden');
+    }
+
+    function submitCopyMonthlyReport() {
+        if (currentRole !== 'admin') return;
+
+        const sourceMonth = document.getElementById('copy-source-month').value;
+        const targetMonth = document.getElementById('copy-target-month').value;
+        const replaceExisting = document.getElementById('copy-replace-existing').checked;
+        const submitBtn = document.getElementById('copy-month-submit-btn');
+
+        if (!sourceMonth || !targetMonth) {
+            showCopyModalError('يرجى تحديد كلٍ من الشهر المصدر والشهر الهدف.');
+            return;
+        }
+
+        if (sourceMonth === targetMonth) {
+            showCopyModalError('لا يمكن نسخ التقرير إلى نفس الشهر المصدر، اختر شهراً مختلفاً.');
+            return;
+        }
+
+        document.getElementById('copy-month-error').classList.add('hidden');
+        submitBtn.disabled = true;
+        const origBtnHtml = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري النسخ...';
+
+        loading(true);
+        google.script.run.withSuccessHandler(res => {
+            loading(false);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHtml;
+            closeCopyMonthModal();
+
+            // Invalidate client-side dashboard cache so next dashboard visit reflects copied records
+            cachedDashboardData = null;
+
+            // Switch month picker to the target month and render optimistically with 0 follow-up queries
+            document.getElementById('month-picker').value = targetMonth;
+            const count = res && res.copiedCount ? res.copiedCount : '';
+            showMonthlyBanner(`تم نسخ التقرير الشهري بنجاح من (${sourceMonth}) إلى (${targetMonth}) — إجمالي التقييمات المنسوخة: ${count}`);
+            if (res && Array.isArray(res.rows) && res.rows.length > 0 && replaceExisting) {
+                processPeriodicData(res.rows, 'monthly', targetMonth);
+            } else {
+                generatePeriodicReport('monthly', true);
+            }
+        }).withFailureHandler(err => {
+            loading(false);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHtml;
+            const errMsg = err && err.message ? err.message : String(err);
+            showCopyModalError(errMsg);
+        }).copyMonthlyReport(sourceMonth, targetMonth, replaceExisting, currentRole);
+    }
+
+    // --- Archive Logic ---
+    function initArchive() {
+       // Auto set "This Month"
+       quickSetDate('month', false);
+
+       if (!settingsData.departments) {
+         google.script.run.withSuccessHandler(data => {
+            settingsData = data;
+            populateArchiveDropdowns();
+            generateArchive();
+         }).withFailureHandler(err => console.error(err)).getSettings();
+       } else {
+         populateArchiveDropdowns();
+         generateArchive();
+       }
+    }
+    
+    function quickSetDate(type, triggerSearch = true) {
+        const now = new Date();
+        const startEl = document.getElementById('arch-start');
+        const endEl = document.getElementById('arch-end');
+        
+        const toLocalYMD = (date) => {
+            const offset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - offset).toISOString().split('T')[0];
+        };
+
+        if (type === 'today') {
+            const str = toLocalYMD(now);
+            startEl.value = str;
+            endEl.value = str;
+        } else if (type === 'month') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            startEl.value = toLocalYMD(start);
+            endEl.value = toLocalYMD(now);
+        } else if (type === 'year') {
+            const start = new Date(now.getFullYear(), 0, 1);
+            startEl.value = toLocalYMD(start);
+            endEl.value = toLocalYMD(now);
+        }
+        
+        if (triggerSearch) generateArchive();
+    }
+
+    function populateArchiveDropdowns() {
+        const fill = (id, arr) => {
+            document.getElementById(id).innerHTML = '<option value="">الكل</option>' + arr.map(x => `<option value="${x}">${x}</option>`).join('');
+        };
+        fill('arch-dept', settingsData.departments);
+        fill('arch-inspector', settingsData.inspectors);
+    }
+
+    function generateArchive() {
+        const start = document.getElementById('arch-start').value;
+        const end = document.getElementById('arch-end').value;
+        const dept = document.getElementById('arch-dept').value;
+        const insp = document.getElementById('arch-inspector').value;
+
+        if(!start || !end) { alert('حدد الفترة'); return; }
+
+        loading(true);
+        google.script.run.withSuccessHandler(rows => {
+            loading(false);
+            const filtered = rows.filter(r => {
+                const matchDept = dept ? r[4] === dept : true;
+                const matchInsp = insp ? r[5] === insp : true;
+                return matchDept && matchInsp;
+            });
+            renderArchive(filtered, {start, end, dept, insp});
+        }).withFailureHandler(err => {
+            loading(false);
+            alert('خطأ في الأرشيف: ' + err);
+        }).getReportData('range', {start, end});
+    }
+
+    function renderArchive(rows, filters) {
+        const container = document.getElementById('archive-result');
+        const detailContainer = document.getElementById('archive-detail-view');
+        const batchContainer = document.getElementById('archive-batch-view');
+        
+        container.classList.remove('hidden');
+        detailContainer.classList.add('hidden');
+        batchContainer.classList.add('hidden');
+        container.innerHTML = '';
+
+        if (rows.length === 0) {
+             container.innerHTML = '<div class="text-center text-gray-500 py-10 bg-gray-50 border border-dashed border-gray-300 rounded">لا توجد بيانات مطابقة للبحث</div>';
+             return;
+        }
+
+        const reports = {};
+        rows.forEach(r => {
+            const dateStr = r[0] || 'Unknown Date';
+            const key = `${dateStr}_${r[3]}_${r[4]}_${r[5]}`;
+
+            if (!reports[key]) {
+                reports[key] = { date: dateStr, period: r[3], dept: r[4], inspector: r[5], supervisor: r[6], yesCount: 0, noCount: 0, rows: [] };
+            }
+            if (r[8] === 'Yes') reports[key].yesCount++;
+            if (r[8] === 'No') reports[key].noCount++;
+            reports[key].rows.push(r);
+        });
+
+        currentArchiveReports = Object.values(reports);
+        currentArchiveReports.sort((a, b) => b.date.localeCompare(a.date));
+
+        const hospName = settingsData?.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+        const printHeader = `
+            <div class="hidden print-only mb-2 border-b-2 border-black pb-2 avoid-break">
+                <div class="report-header-bar">
+                    ${getReportLogoSlotHtml('right')}
+                    <div class="text-center flex-1 px-2">
+                        <h1 class="text-lg font-bold mb-1">${hospName}</h1>
+                        <h2 class="text-base font-bold mb-1">وحدة مكافحة العدوى</h2>
+                        <div class="flex flex-wrap justify-center gap-6 text-xs font-bold mt-2">
+                            <span>من تاريخ: ${filters?.start || '-'}</span>
+                            <span>إلى تاريخ: ${filters?.end || '-'}</span>
+                            <span>القسم: ${filters?.dept || 'الكل'}</span>
+                        </div>
+                    </div>
+                    ${getReportLogoSlotHtml('left')}
+                </div>
+            </div>
+        `;
+
+        let html = `
+            ${printHeader}
+            <div class="flex justify-between items-center mb-4 no-print">
+                <h3 class="font-bold text-xl text-blue-900"><i class="fas fa-list-ul ml-2"></i> نتائج البحث (${currentArchiveReports.length} تقرير)</h3>
+                <div class="flex gap-2">
+                    <button onclick="printSelectedReports()" class="manger-hide bg-emerald-600 text-white px-4 py-2 rounded shadow hover:bg-emerald-700 transition flex items-center text-sm">
+                        <i class="fas fa-print ml-2"></i> طباعة المحدد
+                    </button>
+                </div>
+            </div>
+            <div class="mb-6 no-print relative">
+                <input type="text" id="archive-filter-input" onkeyup="filterArchiveTable()" placeholder="تصفية النتائج (ابحث عن قسم، تاريخ، أو مفتش...)" 
+                       class="w-full border border-gray-300 p-3 pr-10 rounded shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table id="archive-table" class="w-full text-sm text-right bg-white">
+                    <thead class="bg-blue-900 text-white">
+                        <tr>
+                            <th class="p-4 font-bold border-b border-blue-800 w-10 text-center no-print">
+                                <input type="checkbox" id="archive-select-all" onclick="toggleSelectAllArchive(this)" class="w-4 h-4 accent-blue-300">
+                            </th>
+                            <th class="p-4 font-bold border-b border-blue-800">التاريخ</th>
+                            <th class="p-4 font-bold border-b border-blue-800">الفترة</th>
+                            <th class="p-4 font-bold border-b border-blue-800">القسم</th>
+                            <th class="p-4 font-bold border-b border-blue-800">القائم بالمرور</th>
+                            <th class="p-4 font-bold border-b border-blue-800 w-28 no-print text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+        `;
+
+        currentArchiveReports.forEach((rep, index) => {
+            html += `
+                <tr class="hover:bg-blue-50 transition text-gray-700">
+                    <td class="p-4 text-center no-print">
+                        <input type="checkbox" class="archive-chk w-4 h-4 accent-blue-600" value="${index}">
+                    </td>
+                    <td class="p-4 font-medium">${rep.date}</td>
+                    <td class="p-4">${rep.period}</td>
+                    <td class="p-4 font-bold text-gray-900">${rep.dept}</td>
+                    <td class="p-4">${rep.inspector}</td>
+                    <td class="p-4 text-center no-print">
+                         <button onclick="viewArchiveReport(${index})" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">عرض التفاصيل</button>
+                    </td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+        
+        // Print Footer for List View
+        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        const managerSig = settingsData?.managerSignature || 'مدير عام المستشفى';
+        html += `
+            <div class="mt-4 hidden print-only text-center text-sm font-bold pt-4 border-t border-gray-400">
+                <div class="flex justify-around">
+                    <span>${teamSig}</span>
+                    <span>يعتمد، ${managerSig}</span>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+    }
+
+    function toggleSelectAllArchive(source) {
+        const checkboxes = document.querySelectorAll('.archive-chk');
+        checkboxes.forEach(cb => {
+            if(cb.closest('tr').style.display !== 'none') {
+                cb.checked = source.checked;
+            }
+        });
+    }
+
+    function printSelectedReports() {
+        const checkboxes = document.querySelectorAll('.archive-chk:checked');
+        if (checkboxes.length === 0) {
+            alert("الرجاء تحديد تقرير واحد على الأقل للطباعة");
+            return;
+        }
+
+        const batchContainer = document.getElementById('archive-batch-view');
+        const contentDiv = document.getElementById('archive-batch-content');
+        
+        // Hide list, show batch
+        document.getElementById('archive-result').classList.add('hidden');
+        batchContainer.classList.remove('hidden');
+
+        // Group selected reports by Date
+        const groupedByDate = {};
+        
+        checkboxes.forEach((cb) => {
+            const index = parseInt(cb.value);
+            const report = currentArchiveReports[index];
+            if (report) {
+                if (!groupedByDate[report.date]) {
+                    groupedByDate[report.date] = [];
+                }
+                groupedByDate[report.date].push(report);
+            }
+        });
+
+        let htmlAccumulator = '';
+        const dates = Object.keys(groupedByDate).sort().reverse(); // Show newest dates first
+
+        dates.forEach((date, idx) => {
+            const reports = groupedByDate[date];
+            htmlAccumulator += buildCombinedDailyReport(date, reports);
+            
+            // Add page break if it's not the last date
+            if (idx < dates.length - 1) {
+                htmlAccumulator += '<div class="page-break"></div>';
+            }
+        });
+
+        contentDiv.innerHTML = htmlAccumulator;
+    }
+
+    function buildCombinedDailyReport(date, reports) {
+        // Calculate Total Score for the whole day (Average of displayed reports)
+        let totalYesAll = 0;
+        let totalNoAll = 0;
+        
+        // Build Summary Table Rows
+        let summaryRows = '';
+        
+        // Data structure to group violations by Department across all reports for this day
+        // Key: Department Name, Value: Array of {note, rec}
+        const deptViolationsMap = {};
+
+        reports.forEach(rep => {
+            const total = rep.yesCount + rep.noCount;
+            const score = total === 0 ? 0 : Math.round((rep.yesCount / total) * 100);
+            
+            totalYesAll += rep.yesCount;
+            totalNoAll += rep.noCount;
+
+            // Summary Row
+            summaryRows += `
+                <tr class="hover:bg-gray-50">
+                    <td class="border border-gray-400 p-2 font-bold">${rep.dept}</td>
+                    <td class="border border-gray-400 p-2 text-center">${rep.period}</td>
+                    <td class="border border-gray-400 p-2 text-center">${rep.inspector}</td>
+                </tr>
+            `;
+
+            // Aggregate Violations
+            const failures = rep.rows.filter(r => r[8] === 'No');
+            if (failures.length > 0) {
+                if (!deptViolationsMap[rep.dept]) {
+                    deptViolationsMap[rep.dept] = [];
+                }
+                failures.forEach(f => {
+                    // f[9] is the Note, f[10] is Recommendation, f[11] is Responsible Officer, f[7] is procedure
+                    const resp = f[11] || (settingsData?.procedures?.find(p => p.name === f[7])?.responsible) || '-';
+                    deptViolationsMap[rep.dept].push({
+                        note: f[9] || '-',
+                        rec: f[10] || '-',
+                        responsible: resp
+                    });
+                });
+            }
+        });
+
+        // Build Details Table Rows (Grouped by Dept)
+        let violationRows = '';
+        const affectedDepts = Object.keys(deptViolationsMap);
+
+        if (affectedDepts.length === 0) {
+            violationRows = '<tr><td colspan="4" class="p-4 text-center text-emerald-700 font-bold border border-gray-400">لا توجد ملاحظات مسجلة لهذا التاريخ في الأقسام المختارة - تم استيفاء جميع الإجراءات بنجاح</td></tr>';
+        } else {
+            affectedDepts.forEach(dept => {
+                const items = deptViolationsMap[dept];
+                items.forEach((item, idx) => {
+                    violationRows += `<tr class="hover:bg-gray-50">`;
+                    // Rowspan for Department Name (Merge cells if dept is repeated)
+                    if (idx === 0) {
+                        violationRows += `<td class="border border-gray-400 p-2 font-bold bg-gray-50 align-top" rowspan="${items.length}">${dept}</td>`;
+                    }
+                    violationRows += `
+                        <td class="border border-gray-400 p-2 text-red-700 align-top">${item.note}</td>
+                        <td class="border border-gray-400 p-2 align-top">${item.rec}</td>
+                        <td class="border border-gray-400 p-2 align-top font-bold text-gray-800">${item.responsible || '-'}</td>
+                    </tr>`;
+                });
+            });
+        }
+
+        const hospName = settingsData?.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        return `
+        <div class="bg-white p-8 border border-gray-200 shadow-sm mb-4 relative print-container">
+            
+            <!-- Header -->
+            <div class="avoid-break border-b-2 border-blue-900 pb-2 mb-3">
+                <div class="report-header-bar">
+                    ${getReportLogoSlotHtml('right')}
+                    <div class="text-center flex-1 px-2">
+                        <h1 class="text-xl font-bold text-blue-900 mb-1">${hospName}</h1>
+                        <h2 class="text-lg font-bold text-blue-800">وحدة مكافحة العدوى</h2>
+                    </div>
+                    ${getReportLogoSlotHtml('left')}
+                </div>
+                <div class="flex flex-wrap justify-between items-end mt-3 px-4 md:px-10 gap-2">
+                    <p class="text-sm font-bold">تقرير مرور أسبوعي مجمع</p>
+                    <div class="text-sm border border-gray-400 px-4 py-1 rounded bg-gray-50">
+                        <span class="font-bold text-blue-900 ml-2">التاريخ:</span> 
+                        <span class="font-bold text-gray-800">${date}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table 1: Summary -->
+            <div class="mb-6">
+                <h3 class="font-bold text-blue-900 mb-2 border-r-4 border-blue-900 pr-2">ملخص المرور</h3>
+                <table class="w-full text-xs border-collapse border border-gray-400">
+                    <thead class="bg-blue-100 text-blue-900">
+                        <tr>
+                            <th class="border border-gray-400 p-2">القسم</th>
+                            <th class="border border-gray-400 p-2">الفترة</th>
+                            <th class="border border-gray-400 p-2">القائم بالمرور</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summaryRows}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table 2: Details -->
+            <div>
+                <h3 class="font-bold text-blue-900 mb-2 border-r-4 border-red-600 pr-2">تفاصيل الملاحظات والتوصيات وخطة التنفيذ</h3>
+                <table class="w-full text-xs border-collapse border border-gray-400">
+                    <thead class="bg-gray-100 text-gray-900">
+                        <tr>
+                            <th class="border border-gray-400 p-2 w-1/5">القسم</th>
+                            <th class="border border-gray-400 p-2 w-2/5">الملاحظات</th>
+                            <th class="border border-gray-400 p-2 w-1/4">التوصيات</th>
+                            <th class="border border-gray-400 p-2 w-1/6">المسؤول عن التنفيذ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${violationRows}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Footer -->
+            <div class="mt-4 pt-2 border-t border-gray-400 text-sm text-gray-900 avoid-break page-break-inside-avoid">
+                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
+                <div class="text-left font-bold pl-4">
+                    <p>${teamSig}</p>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function closeBatchView() {
+        document.getElementById('archive-batch-view').classList.add('hidden');
+        document.getElementById('archive-result').classList.remove('hidden');
+    }
+
+    function filterArchiveTable() {
+        const input = document.getElementById('archive-filter-input');
+        const filter = input.value.toLowerCase();
+        const trs = document.getElementById('archive-table').getElementsByTagName('tr');
+        for (let i = 1; i < trs.length; i++) {
+            const tr = trs[i];
+            const tds = tr.getElementsByTagName('td');
+            let txtValue = "";
+            for(let j=0; j < tds.length; j++) txtValue += (tds[j].textContent || tds[j].innerText) + " ";
+            tr.style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+    
+    function viewArchiveReport(index) {
+        const report = currentArchiveReports[index];
+        if(!report) return;
+
+        document.getElementById('archive-result').classList.add('hidden');
+        document.getElementById('archive-detail-view').classList.remove('hidden');
+
+        populateReportLogoSlots('arc-right-logo-slot', 'arc-left-logo-slot');
+        document.getElementById('arc-res-hosp-name').innerText = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
+        document.getElementById('arc-res-team-sig').innerText = settingsData.teamSignature || 'فريق مكافحة العدوى';
+        document.getElementById('arc-res-date').innerText = report.date;
+        document.getElementById('arc-res-dept').innerText = report.dept;
+        document.getElementById('arc-res-period').innerText = report.period;
+        document.getElementById('arc-res-inspector').innerText = report.inspector;
+        const arcSupervisorEl = document.getElementById('arc-res-supervisor');
+        if (arcSupervisorEl) arcSupervisorEl.innerText = report.supervisor || '-';
+
+        const tbody = document.getElementById('arc-res-table-body');
+        tbody.innerHTML = '';
+        const failures = report.rows.filter(r => r[8] === 'No');
+
+        if(failures.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-emerald-700 font-bold border border-gray-300">لا توجد مخالفات مسجلة - تم استيفاء جميع إجراءات مكافحة العدوى</td></tr>';
+        } else {
+            failures.forEach(r => {
+                const resp = r[11] || (settingsData?.procedures?.find(p => p.name === r[7])?.responsible) || '-';
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="border border-gray-300 p-2 text-red-700 font-medium">${r[9] || '-'}</td>
+                        <td class="border border-gray-300 p-2">${r[10] || '-'}</td>
+                        <td class="border border-gray-300 p-2 font-bold text-gray-800">${resp}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+    
+    function closeArchiveDetail() {
+        document.getElementById('archive-detail-view').classList.add('hidden');
+        document.getElementById('archive-result').classList.remove('hidden');
+    }
+
+    // --- Client In-Memory Caching for Dashboard ---
+    let cachedDashboardData = null;
+    let lastDashboardFetch = 0;
+
+    // --- Dashboard Charts ---
+    function loadDashboard(force = false) {
+      const now = Date.now();
+      // Reuse local memory cache if less than 60 seconds old to completely eliminate unnecessary roundtrips
+      if (!force && cachedDashboardData && (now - lastDashboardFetch < 60000)) {
+        processDashboardMetrics(cachedDashboardData);
+        return;
+      }
+
+      google.script.run.withSuccessHandler(data => {
+         cachedDashboardData = data || [];
+         lastDashboardFetch = Date.now();
+         processDashboardMetrics(cachedDashboardData);
+      }).withFailureHandler(err => console.error("Dashboard Load Error: ", err)).getDashboardMetrics();
+    }
+
+    function processDashboardMetrics(data) {
+       let totalYes=0, totalNo=0, weekYes=0, weekNo=0, monYes=0, monNo=0;
+       const deptStats = {}, dailyTrend = {};
+       const nowObj = new Date();
+       const today = nowObj.toISOString().split('T')[0];
+       const thisMonth = nowObj.getMonth();
+       const thisYear = nowObj.getFullYear();
+       
+       // Calculate 7 days window for weekly compliance
+       const weekStartObj = new Date();
+       weekStartObj.setDate(weekStartObj.getDate() - 7);
+       const weekStart = weekStartObj.toISOString().split('T')[0];
+       
+       data.forEach(r => {
+          const dStr = r.date;
+          const dObj = new Date(dStr);
+          const status = r.status;
+          
+          if(status === 'Yes') totalYes++;
+          if(status === 'No') totalNo++;
+
+          if(dStr >= weekStart && dStr <= today) {
+              if(status === 'Yes') weekYes++;
+              if(status === 'No') weekNo++;
+          }
+          if(dObj.getMonth() === thisMonth && dObj.getFullYear() === thisYear) {
+              if(status === 'Yes') monYes++;
+              if(status === 'No') monNo++;
+              if(!deptStats[r.dept]) deptStats[r.dept] = {yes:0, no:0};
+              if(status === 'Yes') deptStats[r.dept].yes++;
+              if(status === 'No') deptStats[r.dept].no++;
+          }
+
+          if(!dailyTrend[dStr]) dailyTrend[dStr] = {yes:0, no:0};
+          if(status === 'Yes') dailyTrend[dStr].yes++;
+          if(status === 'No') dailyTrend[dStr].no++;
+       });
+
+       const weekTotal = weekYes + weekNo;
+       const monTotal = monYes + monNo;
+       const allTotal = totalYes + totalNo;
+
+       const dailyEl = document.getElementById('dash-daily-val');
+       if (dailyEl) dailyEl.innerText = weekTotal.toLocaleString('ar-EG');
+       const weeklyEl = document.getElementById('dash-weekly-val');
+       if (weeklyEl) weeklyEl.innerText = weekTotal.toLocaleString('ar-EG');
+       const monEl = document.getElementById('dash-monthly-val');
+       if (monEl) monEl.innerText = monTotal.toLocaleString('ar-EG');
+       const yearEl = document.getElementById('dash-yearly-val');
+       if (yearEl) yearEl.innerText = allTotal.toLocaleString('ar-EG');
+
+       renderCharts(deptStats, dailyTrend);
+    }
+
+    function refreshCacheMetricsUI() {
+      google.script.run.withSuccessHandler(metrics => {
+        if (!metrics) return;
+        const hitRateEl = document.getElementById('cache-hit-rate');
+        const savedReadsEl = document.getElementById('cache-saved-reads');
+        if (hitRateEl) hitRateEl.innerText = `معدل الكفاءة: ${metrics.hitRate || '100%'}`;
+        if (savedReadsEl) savedReadsEl.innerText = `${metrics.savedCloudReads || 0} استعلام موفر`;
+      }).withFailureHandler(err => console.warn(err)).getCacheMetrics();
+    }
+
+    let deptChartInst = null;
+    let trendChartInst = null;
+
+    function renderCharts(deptStats, dailyTrend) {
+        const deptLabels = Object.keys(deptStats);
+        const deptCounts = deptLabels.map(d => {
+            const s = deptStats[d];
+            return s.yes + s.no;
+        });
+
+        const ctx1 = document.getElementById('deptChart').getContext('2d');
+        if(deptChartInst) deptChartInst.destroy();
+        deptChartInst = new Chart(ctx1, {
+            type: 'bar',
+            data: { labels: deptLabels, datasets: [{ label: 'عدد الإجراءات المقيمة', data: deptCounts, backgroundColor: '#1e3a8a', borderRadius: 4 }] },
+            options: { responsive: true }
+        });
+
+        const trendDates = Object.keys(dailyTrend).sort();
+        const trendCounts = trendDates.map(d => {
+             const s = dailyTrend[d];
+             return s.yes + s.no;
+        });
+
+        const ctx2 = document.getElementById('trendChart').getContext('2d');
+        if(trendChartInst) trendChartInst.destroy();
+        trendChartInst = new Chart(ctx2, {
+            type: 'line',
+            data: { labels: trendDates, datasets: [{ label: 'عدد الإجراءات المقيمة', data: trendCounts, borderColor: '#059669', backgroundColor: 'rgba(5, 150, 105, 0.1)', tension: 0.1, fill: true }] },
+            options: { responsive: true }
+        });
+    }
+
+    window.onload = function() { 
+        document.getElementById('login-modal').classList.remove('hidden');
+        document.getElementById('login-pass-input').focus();
+    };
+  </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
