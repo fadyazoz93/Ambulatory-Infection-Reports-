@@ -28,7 +28,7 @@ if (activeProvider === 'turso' || activeProvider === 'local') {
 // Default settings used for initial seeding if neither Turso nor Google Sheets has settings yet
 const DEFAULT_SETTINGS = {
   hospitalName: 'مستشفى المنيا الجامعى للعيون',
-  teamSignature: 'فريق مكافحة العدوى',
+  teamSignature: 'مشرف مكافحة العدوى',
   managerSignature: 'مدير عام المستشفى',
   rightLogoUrl: '',
   leftLogoUrl: '',
@@ -199,6 +199,10 @@ app.post('/api', async (req: Request, res: Response) => {
               });
             }
           }
+        }
+
+        if (!settings.teamSignature || settings.teamSignature === 'فريق مكافحة العدوى') {
+          settings.teamSignature = 'مشرف مكافحة العدوى';
         }
 
         // Cache in memory: 15 minutes TTL

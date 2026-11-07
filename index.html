@@ -384,8 +384,8 @@
                     <input type="text" id="set-hospital-name" oninput="updateLiveHeaderTitlePreview()" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold mb-1 text-gray-700">توقيع الفريق</label>
-                    <input type="text" id="set-team-signature" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="فريق مكافحة العدوى">
+                    <label class="block text-sm font-bold mb-1 text-gray-700">توقيع مشرف مكافحة العدوى</label>
+                    <input type="text" id="set-team-signature" class="w-full border border-gray-500 p-2 rounded bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="مشرف مكافحة العدوى">
                 </div>
                 <div>
                     <label class="block text-sm font-bold mb-1 text-gray-700">توقيع المدير</label>
@@ -678,9 +678,8 @@
             </table>
             
             <div class="mt-4 pt-2 border-t border-gray-400 text-xs text-gray-800 avoid-break">
-                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
                 <div class="text-left font-bold pl-4">
-                    <p id="daily-team-sig">فريق مكافحة العدوى</p>
+                    <p id="daily-team-sig">مشرف مكافحة العدوى</p>
                 </div>
             </div>
 
@@ -866,9 +865,8 @@
             </table>
             
             <div class="mt-4 pt-2 border-t border-gray-400 text-xs text-gray-800 avoid-break">
-                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
                 <div class="text-left font-bold pl-4">
-                    <p id="arc-res-team-sig">فريق مكافحة العدوى</p>
+                    <p id="arc-res-team-sig">مشرف مكافحة العدوى</p>
                 </div>
             </div>
 
@@ -1520,7 +1518,7 @@
 
     function renderSettingsUI() {
       document.getElementById('set-hospital-name').value = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
-      document.getElementById('set-team-signature').value = settingsData.teamSignature || 'فريق مكافحة العدوى';
+      document.getElementById('set-team-signature').value = (settingsData.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
       document.getElementById('set-manager-signature').value = settingsData.managerSignature || 'مدير عام المستشفى';
       document.getElementById('set-right-logo').value = settingsData.rightLogoUrl || '';
       document.getElementById('set-left-logo').value = settingsData.leftLogoUrl || '';
@@ -1697,7 +1695,7 @@
 
       const newSettings = {
         hospitalName: document.getElementById('set-hospital-name').value.trim() || settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون',
-        teamSignature: document.getElementById('set-team-signature').value.trim() || settingsData.teamSignature || 'فريق مكافحة العدوى',
+        teamSignature: document.getElementById('set-team-signature').value.trim() || 'مشرف مكافحة العدوى',
         managerSignature: document.getElementById('set-manager-signature').value.trim() || settingsData.managerSignature || 'مدير عام المستشفى',
         rightLogoUrl: rightLogoVal,
         leftLogoUrl: leftLogoVal,
@@ -1983,7 +1981,7 @@
 
         populateReportLogoSlots('daily-right-logo-slot', 'daily-left-logo-slot');
         document.getElementById('daily-hosp-name').innerText = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
-        document.getElementById('daily-team-sig').innerText = settingsData.teamSignature || 'فريق مكافحة العدوى';
+        document.getElementById('daily-team-sig').innerText = (settingsData.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
         document.getElementById('res-date').innerText = data.date;
         document.getElementById('res-dept').innerText = data.department;
         document.getElementById('res-period').innerText = data.period;
@@ -2127,7 +2125,7 @@
         const threshold = type === 'monthly' ? 5 : 15;
 
         const hospName = settingsData?.hospitalName || 'مستشفى المنيا الجامعى للعيون';
-        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        const teamSig = (settingsData?.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
         const managerSig = settingsData?.managerSignature || 'مدير عام المستشفى';
         
         let html = `
@@ -2504,7 +2502,7 @@
         html += `</tbody></table></div>`;
         
         // Print Footer for List View
-        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        const teamSig = (settingsData?.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
         const managerSig = settingsData?.managerSignature || 'مدير عام المستشفى';
         html += `
             <div class="mt-4 hidden print-only text-center text-sm font-bold pt-4 border-t border-gray-400">
@@ -2642,7 +2640,7 @@
         }
 
         const hospName = settingsData?.hospitalName || 'مستشفى المنيا الجامعى للعيون';
-        const teamSig = settingsData?.teamSignature || 'فريق مكافحة العدوى';
+        const teamSig = (settingsData?.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
         return `
         <div class="bg-white p-8 border border-gray-200 shadow-sm mb-4 relative print-container">
             
@@ -2702,7 +2700,6 @@
             
             <!-- Footer -->
             <div class="mt-4 pt-2 border-t border-gray-400 text-sm text-gray-900 avoid-break page-break-inside-avoid">
-                <p class="font-bold mb-4 text-right">الأجراء المتخذ : تم التبليغ بالملاحظات لأتخاذ الأجراء اللازم</p>
                 <div class="text-left font-bold pl-4">
                     <p>${teamSig}</p>
                 </div>
@@ -2738,7 +2735,7 @@
 
         populateReportLogoSlots('arc-right-logo-slot', 'arc-left-logo-slot');
         document.getElementById('arc-res-hosp-name').innerText = settingsData.hospitalName || 'مستشفى المنيا الجامعى للعيون';
-        document.getElementById('arc-res-team-sig').innerText = settingsData.teamSignature || 'فريق مكافحة العدوى';
+        document.getElementById('arc-res-team-sig').innerText = (settingsData.teamSignature && settingsData.teamSignature !== 'فريق مكافحة العدوى') ? settingsData.teamSignature : 'مشرف مكافحة العدوى';
         document.getElementById('arc-res-date').innerText = report.date;
         document.getElementById('arc-res-dept').innerText = report.dept;
         document.getElementById('arc-res-period').innerText = report.period;

@@ -89,7 +89,7 @@ function setupSheet(optSS) {
     // Default Settings
     const defaults = [
       ['hospitalName', JSON.stringify('مستشفى المنيا الجامعى للعيون')],
-      ['teamSignature', JSON.stringify('فريق مكافحة العدوى')],
+      ['teamSignature', JSON.stringify('مشرف مكافحة العدوى')],
       ['managerSignature', JSON.stringify('مدير عام المستشفى')],
       ['rightLogoUrl', JSON.stringify('')],
       ['leftLogoUrl', JSON.stringify('')],
@@ -360,7 +360,7 @@ function saveSettingsData(ss, newSettings, role) {
   const rows = [
     ['Key', 'Value (JSON)'],
     ['hospitalName', JSON.stringify(newSettings.hospitalName || 'مستشفى المنيا الجامعى للعيون')],
-    ['teamSignature', JSON.stringify(newSettings.teamSignature || 'فريق مكافحة العدوى')],
+    ['teamSignature', JSON.stringify(newSettings.teamSignature || 'مشرف مكافحة العدوى')],
     ['managerSignature', JSON.stringify(newSettings.managerSignature || 'مدير عام المستشفى')],
     ['rightLogoUrl', JSON.stringify(newSettings.rightLogoUrl || '')],
     ['leftLogoUrl', JSON.stringify(newSettings.leftLogoUrl || '')],
