@@ -1849,6 +1849,12 @@
                             <input type="text" id="obs_resp_${idx}" placeholder="المسؤول عن التنفيذ" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium">
                         </div>
                     </div>
+                    <div class="mt-2.5 pt-2 border-t border-red-200 flex items-center justify-between">
+                        <label class="flex items-center gap-1.5 text-xs text-blue-900 font-bold cursor-pointer select-none">
+                            <input type="checkbox" id="obs_persist_${idx}" checked class="obs-persist-checkbox w-4 h-4 text-blue-600 rounded">
+                            <span>حفظ هذه الملاحظة أيضاً في جدول ملاحظات القسم الدائم لتظهر في التقييمات القادمة</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         `;
@@ -1942,11 +1948,13 @@
             }
         }
 
+        const persistentObsToAdd = [];
         checkedBoxes.forEach(cb => {
             const idx = cb.id.replace('obs_check_', '');
             const noteInput = document.getElementById(`obs_note_${idx}`);
             const recInput = document.getElementById(`obs_rec_${idx}`);
             const respInput = document.getElementById(`obs_resp_${idx}`);
+            const persistInput = document.getElementById(`obs_persist_${idx}`);
 
             const note = noteInput ? noteInput.value.trim() : '';
             const rec = recInput ? recInput.value.trim() : '';
@@ -1960,8 +1968,43 @@
                     rec: rec,
                     responsible: resp
                 });
+
+                if (persistInput && persistInput.checked) {
+                    persistentObsToAdd.push({
+                        note: note,
+                        rec: rec,
+                        responsible: resp,
+                        dept: formData.department
+                    });
+                }
             }
         });
+
+        // If user chose to persist new observations to the permanent catalog, save them to Settings
+        if (persistentObsToAdd.length > 0) {
+            if (!settingsData.procedures) settingsData.procedures = [];
+            persistentObsToAdd.forEach(item => {
+                const existing = settingsData.procedures.find(p => (p.note || p.name) === item.note);
+                if (existing) {
+                    if (!existing.depts) existing.depts = [];
+                    if (!existing.depts.includes(item.dept)) {
+                        existing.depts.push(item.dept);
+                    }
+                    if (!existing.responsible && item.responsible) existing.responsible = item.responsible;
+                    if (!existing.rec && item.rec) existing.rec = item.rec;
+                } else {
+                    settingsData.procedures.push({
+                        name: item.note,
+                        note: item.note,
+                        rec: item.rec,
+                        responsible: item.responsible,
+                        depts: [item.dept]
+                    });
+                }
+            });
+            // Save updated settings to database / sheets
+            google.script.run.saveSettingsData(settingsData, currentRole || 'user');
+        }
 
         loading(true);
         google.script.run.withSuccessHandler(() => {
