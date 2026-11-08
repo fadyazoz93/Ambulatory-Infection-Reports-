@@ -97,11 +97,12 @@ function setupSheet(optSS) {
       ['departments', JSON.stringify(['طوارئ', 'عناية مركزة', 'عمليات', 'عيادات خارجية', 'معمل', 'أشعة'])],
       ['periods', JSON.stringify(['صباحية', 'مسائية', 'سهر'])],
       ['inspectors', JSON.stringify(['د. أحمد', 'د. محمد', 'أ. سارة'])],
+      ['responsibles', JSON.stringify(['مشرف التمريض', 'طبيب القسم', 'رئيس القسم', 'مسؤول الخدمات المعاونة', 'مسؤول التعقيم المركزي', 'الصيدلية', 'الإدارة الهندسية', 'مشرف مكافحة العدوى', 'إدارة المستشفى'])],
       ['procedures', JSON.stringify([
-         {name: 'غسل الأيدي', note: 'عدم الالتزام باللحظات الخمس', rec: 'إعادة التدريب', responsible: 'مشرف التمريض', depts: []},
-         {name: 'ارتداء الواقيات الشخصية', note: 'عدم ارتداء الماسك/الجوانتي', rec: 'توفير المستلزمات', responsible: 'مشرف التمريض / الصيدلية', depts: []},
-         {name: 'فرز النفايات', note: 'خلط النفايات', rec: 'توفير أكياس ملونة', responsible: 'مسؤول الخدمات المعاونة', depts: []},
-         {name: 'تعقيم الآلات', note: 'قصور في الدورة التعقيمية', rec: 'صيانة الأوتوكلاف', responsible: 'مسؤول التعقيم المركزي', depts: ['عمليات', 'طوارئ']}
+         {name: 'غسل الأيدي', note: 'عدم الالتزام باللحظات الخمس', rec: 'إعادة التدريب', depts: []},
+         {name: 'ارتداء الواقيات الشخصية', note: 'عدم ارتداء الماسك/الجوانتي', rec: 'توفير المستلزمات', depts: []},
+         {name: 'فرز النفايات', note: 'خلط النفايات', rec: 'توفير أكياس ملونة', depts: []},
+         {name: 'تعقيم الآلات', note: 'قصور في الدورة التعقيمية', rec: 'صيانة الأوتوكلاف', depts: ['عمليات', 'طوارئ']}
       ])]
     ];
     defaults.forEach(row => settingsSheet.appendRow(row));
@@ -368,6 +369,7 @@ function saveSettingsData(ss, newSettings, role) {
     ['departments', JSON.stringify(newSettings.departments)],
     ['periods', JSON.stringify(newSettings.periods)],
     ['inspectors', JSON.stringify(newSettings.inspectors)],
+    ['responsibles', JSON.stringify(newSettings.responsibles || [])],
     ['procedures', JSON.stringify(newSettings.procedures)]
   ];
   

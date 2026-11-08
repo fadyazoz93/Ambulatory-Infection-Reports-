@@ -36,11 +36,22 @@ const DEFAULT_SETTINGS = {
   departments: ['طوارئ', 'عناية مركزة', 'عمليات', 'عيادات خارجية'],
   periods: ['صباحية', 'مسائية', 'سهر'],
   inspectors: ['د. تجريبي', 'م. مكافحة'],
+  responsibles: [
+    'مشرف التمريض',
+    'طبيب القسم',
+    'رئيس القسم',
+    'مسؤول الخدمات المعاونة',
+    'مسؤول التعقيم المركزي',
+    'الصيدلية',
+    'الإدارة الهندسية',
+    'مشرف مكافحة العدوى',
+    'إدارة المستشفى'
+  ],
   procedures: [
-    {name: 'غسل الأيدي', note: 'عدم الالتزام باللحظات الخمس', rec: 'إعادة التدريب', responsible: 'مشرف التمريض', depts: []},
-    {name: 'ارتداء الواقيات', note: 'عدم ارتداء الماسك', rec: 'توفير المستلزمات', responsible: 'مشرف التمريض / الصيدلية', depts: ['عناية مركزة']},
-    {name: 'فرز النفايات', note: 'خلط النفايات', rec: 'توفير أكياس ملونة', responsible: 'مسؤول الخدمات المعاونة', depts: []},
-    {name: 'تعقيم الآلات', note: 'قصور في الدورة التعقيمية', rec: 'صيانة الأوتوكلاف', responsible: 'مسؤول التعقيم المركزي', depts: ['عمليات', 'طوارئ']}
+    {name: 'غسل الأيدي', note: 'عدم الالتزام باللحظات الخمس', rec: 'إعادة التدريب', depts: []},
+    {name: 'ارتداء الواقيات', note: 'عدم ارتداء الماسك', rec: 'توفير المستلزمات', depts: ['عناية مركزة']},
+    {name: 'فرز النفايات', note: 'خلط النفايات', rec: 'توفير أكياس ملونة', depts: []},
+    {name: 'تعقيم الآلات', note: 'قصور في الدورة التعقيمية', rec: 'صيانة الأوتوكلاف', depts: ['عمليات', 'طوارئ']}
   ]
 };
 
@@ -251,6 +262,7 @@ app.post('/api', async (req: Request, res: Response) => {
             ensureNoDeletes(cachedCurrent.departments || [], sanitizedSettings.departments || [], 'الأقسام');
             ensureNoDeletes(cachedCurrent.periods || [], sanitizedSettings.periods || [], 'فترات المرور');
             ensureNoDeletes(cachedCurrent.inspectors || [], sanitizedSettings.inspectors || [], 'القائمين بالمرور');
+            ensureNoDeletes(cachedCurrent.responsibles || [], sanitizedSettings.responsibles || [], 'المسؤولين عن التنفيذ');
             if (Array.isArray(cachedCurrent.procedures) && Array.isArray(sanitizedSettings.procedures)) {
               if (sanitizedSettings.procedures.length < cachedCurrent.procedures.length) {
                 throw new Error("صلاحية حذف الإجراءات غير متاحة لحساب User");

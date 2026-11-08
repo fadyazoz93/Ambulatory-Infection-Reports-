@@ -483,7 +483,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
            <!-- Depts -->
            <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
              <div class="flex items-center justify-between mb-2">
@@ -508,20 +508,26 @@
              </div>
              <textarea id="set-inspectors" class="w-full border border-gray-500 p-2 rounded h-32 bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="كل اسم في سطر جديد"></textarea>
            </div>
+           <!-- Responsibles -->
+           <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
+             <div class="flex items-center justify-between mb-2">
+               <h3 class="font-bold text-blue-900">المسؤولين عن التنفيذ</h3>
+               <span class="user-only hidden text-[11px] text-amber-700 font-bold">إضافة فقط (الحذف مغلق)</span>
+             </div>
+             <textarea id="set-responsibles" class="w-full border border-gray-500 p-2 rounded h-32 bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400" placeholder="كل جهة / مسؤول في سطر جديد"></textarea>
+           </div>
         </div>
 
         <div class="bg-white p-4 rounded shadow-sm border border-gray-200 mt-6 mb-6">
             <h3 class="font-bold mb-2 text-blue-900">ملاحظات وتوصيات مكافحة العدوى</h3>
-            <p class="text-xs text-gray-500 mb-3">حدد الملاحظات التي تظهر كـ Checkbox في التقرير الأسبوعي مع التوصية والمسؤول عن التنفيذ لكل قسم</p>
+            <p class="text-xs text-gray-500 mb-3">حدد الملاحظات التي تظهر كـ Checkbox في التقرير الأسبوعي مع التوصية المقترحة لكل ملاحظة</p>
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-right border border-gray-200">
                   <thead class="bg-blue-50 text-blue-900">
                       <tr>
-                          <th class="p-2 border border-gray-200 min-w-[200px]">الملاحظة (المخالفة المحتملة)</th>
-                          <th class="p-2 border border-gray-200 min-w-[180px]">التوصية المقترحة</th>
-                          <th class="p-2 border border-gray-200 min-w-[150px]">المسؤول عن التنفيذ</th>
-                          <th class="p-2 border border-gray-200 min-w-[150px]">الأقسام المطبقة</th>
-                          <th class="p-2 border border-gray-200 w-12 text-center">حذف</th>
+                          <th class="p-2 border border-gray-200 min-w-[250px]">الملاحظة (المخالفة المحتملة)</th>
+                          <th class="p-2 border border-gray-200 min-w-[250px]">التوصية المقترحة</th>
+                          <th class="p-2 border border-gray-200 w-16 text-center">حذف</th>
                       </tr>
                   </thead>
                   <tbody id="proc-table-body">
@@ -538,7 +544,7 @@
                   <h4 class="font-bold text-xs text-gray-700 mb-1 flex items-center gap-1">
                       <i class="fas fa-file-excel text-green-600"></i> نسخ سريع من إكسيل (Bulk Import)
                   </h4>
-                  <p class="text-[10px] text-gray-500 mb-2">انسخ الأعمدة من إكسيل بالترتيب: <strong>الملاحظة | التوصية | المسؤول عن التنفيذ</strong></p>
+                  <p class="text-[10px] text-gray-500 mb-2">انسخ الأعمدة من إكسيل بالترتيب: <strong>الملاحظة | التوصية</strong></p>
                   <textarea id="bulk-proc-input" class="w-full h-20 text-xs p-2 border border-gray-300 rounded focus:border-blue-500 outline-none" placeholder="الصق البيانات هنا..."></textarea>
                   <button onclick="importBulkProcedures()" class="mt-2 bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700 transition">استيراد البيانات</button>
                </div>
@@ -590,7 +596,7 @@
         
         <!-- Input Form -->
         <div id="daily-form-container" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 no-print">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-bold mb-1 text-gray-700">تاريخ التقرير الأسبوعي</label>
                     <input type="date" id="daily-date" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition">
@@ -606,6 +612,20 @@
                 <div>
                     <label class="block text-sm font-bold mb-1 text-gray-700">القائم بالمرور</label>
                     <select id="daily-inspector" class="w-full border border-gray-300 p-2 rounded bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition"></select>
+                </div>
+            </div>
+
+            <!-- Multi-Select Responsibles for Weekly Report -->
+            <div class="mb-6 p-4 bg-blue-50/70 rounded-lg border border-blue-200">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <label class="block text-sm font-bold text-blue-900 flex items-center gap-1.5">
+                        <i class="fas fa-users-cog text-blue-800"></i>
+                        <span>المسؤول عن التنفيذ (يمكن اختيار أكثر من مسؤول من القائمة):</span>
+                    </label>
+                    <span class="text-xs text-blue-700">المسؤولون المختارون هنا يطبقون تلقائياً على جميع ملاحظات التقرير الأسبوعي</span>
+                </div>
+                <div id="weekly-responsibles-container" class="flex flex-wrap gap-2 pt-1">
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
 
@@ -1541,11 +1561,28 @@
       document.getElementById('set-periods').value = (settingsData.periods || []).join('\n');
       document.getElementById('set-inspectors').value = (settingsData.inspectors || []).join('\n');
       
+      const defaultResponsibles = [
+        'مشرف التمريض',
+        'طبيب القسم',
+        'رئيس القسم',
+        'مسؤول الخدمات المعاونة',
+        'مسؤول التعقيم المركزي',
+        'الصيدلية',
+        'الإدارة الهندسية',
+        'مشرف مكافحة العدوى',
+        'إدارة المستشفى'
+      ];
+      if (!settingsData.responsibles || !Array.isArray(settingsData.responsibles) || settingsData.responsibles.length === 0) {
+        settingsData.responsibles = defaultResponsibles;
+      }
+      const setRespEl = document.getElementById('set-responsibles');
+      if (setRespEl) setRespEl.value = (settingsData.responsibles || []).join('\n');
+
       const tbody = document.getElementById('proc-table-body');
       tbody.innerHTML = '';
       (settingsData.procedures || []).forEach((proc) => {
         const noteVal = proc.note || proc.name || '';
-        addProcRow(noteVal, proc.rec || '', proc.responsible || proc.resp || '', proc.depts || [], true);
+        addProcRow(noteVal, proc.rec || '', true);
       });
     }
 
@@ -1559,18 +1596,11 @@
       tr.remove();
     }
 
-    function addProcRow(note='', rec='', responsible='', depts=[], isExisting=false) {
+    function addProcRow(note='', rec='', isExisting=false) {
       const tbody = document.getElementById('proc-table-body');
       const tr = document.createElement('tr');
       tr.className = "hover:bg-gray-50";
       tr.dataset.existing = isExisting ? 'true' : 'false';
-      
-      let deptsHtml = `<div class="bg-white border border-gray-400 p-2 rounded text-xs checkbox-list proc-depts-container h-24 overflow-y-auto">`;
-      (settingsData.departments || []).forEach(dept => {
-          const isChecked = (depts && depts.includes(dept)) ? 'checked' : '';
-          deptsHtml += `<label class="flex items-center mb-1"><input type="checkbox" value="${dept}" ${isChecked} class="mr-1 dept-checkbox">${dept}</label>`;
-      });
-      deptsHtml += `</div>`;
 
       let actionCellHtml = '';
       if (currentRole === 'admin') {
@@ -1584,13 +1614,10 @@
       tr.innerHTML = `
         <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-2 rounded proc-note bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400 text-xs" placeholder="سجل الملاحظة (المخالفة)"></td>
         <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-2 rounded proc-rec bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400 text-xs" placeholder="التوصية المقترحة"></td>
-        <td class="p-2 border border-gray-200 align-top"><input type="text" class="w-full border border-gray-500 p-2 rounded proc-resp bg-gray-600 text-white placeholder-gray-300 focus:outline-none focus:border-blue-400 text-xs" placeholder="المسؤول عن التنفيذ"></td>
-        <td class="p-2 border border-gray-200 align-top w-48">${deptsHtml}</td>
         <td class="p-2 border border-gray-200 align-top text-center">${actionCellHtml}</td>
       `;
       tr.querySelector('.proc-note').value = note || '';
       tr.querySelector('.proc-rec').value = rec || '';
-      tr.querySelector('.proc-resp').value = responsible || '';
       tbody.appendChild(tr);
     }
     
@@ -1611,19 +1638,17 @@
       rows.forEach(row => {
           if (!row.trim()) return;
           const cols = row.split('\t'); 
-          let note = '', rec = '', resp = '';
-          if (cols.length >= 4) {
+          let note = '', rec = '';
+          if (cols.length >= 3) {
               note = cols[1] ? cols[1].trim() : (cols[0] ? cols[0].trim() : '');
               rec  = cols[2] ? cols[2].trim() : '';
-              resp = cols[3] ? cols[3].trim() : '';
           } else {
               note = cols[0] ? cols[0].trim() : '';
               rec  = cols[1] ? cols[1].trim() : '';
-              resp = cols[2] ? cols[2].trim() : '';
           }
           
           if (note) {
-              addProcRow(note, rec, resp, [], false);
+              addProcRow(note, rec, false);
               count++;
           }
       });
@@ -1639,6 +1664,7 @@
       const newDepts = document.getElementById('set-depts').value.split('\n').map(x => x.trim()).filter(Boolean);
       const newPeriods = document.getElementById('set-periods').value.split('\n').map(x => x.trim()).filter(Boolean);
       const newInspectors = document.getElementById('set-inspectors').value.split('\n').map(x => x.trim()).filter(Boolean);
+      const newResponsibles = (document.getElementById('set-responsibles')?.value || '').split('\n').map(x => x.trim()).filter(Boolean);
       const rightLogoVal = document.getElementById('set-right-logo').value.trim();
       const leftLogoVal = document.getElementById('set-left-logo').value.trim();
 
@@ -1668,6 +1694,12 @@
         const deletedInspectors = (settingsData.inspectors || []).filter(i => !newInspectors.includes(i));
         if (deletedInspectors.length > 0) {
           showSettingsSaveBanner(`عذراً، صلاحية الحذف غير متاحة لحساب User — لا يمكن حذف القائمين بالمرور المسجلين مسبقاً: (${deletedInspectors.join('، ')})`, true);
+          return;
+        }
+
+        const deletedResponsibles = (settingsData.responsibles || []).filter(r => !newResponsibles.includes(r));
+        if (deletedResponsibles.length > 0) {
+          showSettingsSaveBanner(`عذراً، صلاحية الحذف غير متاحة لحساب User — لا يمكن حذف المسؤولين عن التنفيذ المسجلين مسبقاً: (${deletedResponsibles.join('، ')})`, true);
           return;
         }
 
@@ -1703,20 +1735,17 @@
         departments: newDepts,
         periods: newPeriods,
         inspectors: newInspectors,
+        responsibles: newResponsibles,
         procedures: []
       };
 
       document.querySelectorAll('#proc-table-body tr').forEach(tr => {
         const note = tr.querySelector('.proc-note')?.value.trim() || '';
         if (!note) return;
-        const selectedDepts = [];
-        tr.querySelectorAll('.dept-checkbox:checked').forEach(cb => selectedDepts.push(cb.value));
         newSettings.procedures.push({
           name: note,
           note: note,
-          rec: tr.querySelector('.proc-rec')?.value.trim() || '',
-          responsible: tr.querySelector('.proc-resp')?.value.trim() || '',
-          depts: selectedDepts
+          rec: tr.querySelector('.proc-rec')?.value.trim() || ''
         });
       });
 
@@ -1758,6 +1787,7 @@
         fill('daily-period', settingsData.periods);
         fill('daily-dept', settingsData.departments);
         fill('daily-inspector', settingsData.inspectors);
+        populateWeeklyResponsiblesList();
         const listEl = document.getElementById('procedures-list');
         if (listEl) listEl.innerHTML = '';
         const hintEl = document.getElementById('proc-hint');
@@ -1767,6 +1797,72 @@
         updateObsCounter();
     }
     const populateWeeklyDropdowns = populateDailyDropdowns;
+
+    function populateWeeklyResponsiblesList() {
+        const container = document.getElementById('weekly-responsibles-container');
+        if (!container) return;
+        const list = (settingsData.responsibles && settingsData.responsibles.length > 0)
+            ? settingsData.responsibles
+            : [
+                'مشرف التمريض',
+                'طبيب القسم',
+                'رئيس القسم',
+                'مسؤول الخدمات المعاونة',
+                'مسؤول التعقيم المركزي',
+                'الصيدلية',
+                'الإدارة الهندسية',
+                'مشرف مكافحة العدوى',
+                'إدارة المستشفى'
+              ];
+
+        container.innerHTML = list.map(r => `
+            <label class="weekly-resp-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-300 bg-white text-blue-900 cursor-pointer hover:bg-blue-100 transition shadow-sm select-none">
+                <input type="checkbox" value="${escapeHtml(r)}" class="weekly-global-resp w-4 h-4 accent-blue-700 cursor-pointer" onchange="onGlobalResponsibleChange()">
+                <span>${escapeHtml(r)}</span>
+            </label>
+        `).join('');
+    }
+
+    function onGlobalResponsibleChange() {
+        // Highlight active chips
+        document.querySelectorAll('.weekly-resp-chip').forEach(chip => {
+            const cb = chip.querySelector('input');
+            if (cb && cb.checked) {
+                chip.className = 'weekly-resp-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-600 bg-blue-700 text-white cursor-pointer shadow-sm select-none';
+            } else {
+                chip.className = 'weekly-resp-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-300 bg-white text-blue-900 cursor-pointer hover:bg-blue-100 transition shadow-sm select-none';
+            }
+        });
+    }
+
+    function getSelectedResponsibles() {
+        const selected = [];
+        document.querySelectorAll('.weekly-global-resp:checked').forEach(cb => {
+            const val = cb.value.trim();
+            if (val && !selected.includes(val)) selected.push(val);
+        });
+        const unique = [...new Set(selected)];
+        return unique.join('\n') || '-';
+    }
+
+    function formatResponsibleHtml(rawResp) {
+        if (!rawResp || rawResp === '-' || rawResp === 'null' || rawResp === 'undefined') {
+            return '-';
+        }
+        // Split by newlines, Arabic comma '،', English comma ',', slash '/', or semicolon ';'
+        const parts = String(rawResp)
+            .split(/[\r\n،,;/]+/)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        // Deduplicate items while preserving order
+        const unique = [...new Set(parts)];
+
+        if (unique.length === 0) return '-';
+
+        // Render each responsible stacked underneath each other without any separators or commas
+        return unique.map(item => `<div class="leading-snug py-0.5">${escapeHtml(item)}</div>`).join('');
+    }
 
     function updateObsCounter() {
         const checked = document.querySelectorAll('.obs-checkbox:checked').length;
@@ -1821,6 +1917,7 @@
         const div = document.createElement('div');
         div.id = `obs_card_${idx}`;
         div.className = "observation-card bg-red-50/70 p-4 rounded-lg border border-red-300 shadow-sm flex flex-col gap-2.5 transition";
+
         div.innerHTML = `
             <div class="flex items-start gap-3">
                 <div class="pt-0.5">
@@ -1835,7 +1932,7 @@
                             <i class="fas fa-trash"></i> حذف
                         </button>
                     </div>
-                    <div id="obs_details_${idx}" class="obs-details-box grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div id="obs_details_${idx}" class="obs-details-box grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[11px] font-bold text-red-900 mb-1">الملاحظة (المخالفة)</label>
                             <input type="text" id="obs_note_${idx}" placeholder="سجل الملاحظة أو المخالفة" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium">
@@ -1844,15 +1941,11 @@
                             <label class="block text-[11px] font-bold text-red-900 mb-1">التوصية المقترحة</label>
                             <input type="text" id="obs_rec_${idx}" placeholder="سجل التوصية المقترحة" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium">
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-red-900 mb-1">المسؤول عن التنفيذ</label>
-                            <input type="text" id="obs_resp_${idx}" placeholder="المسؤول عن التنفيذ" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium">
-                        </div>
                     </div>
                     <div class="mt-2.5 pt-2 border-t border-red-200 flex items-center justify-between">
                         <label class="flex items-center gap-1.5 text-xs text-blue-900 font-bold cursor-pointer select-none">
                             <input type="checkbox" id="obs_persist_${idx}" checked class="obs-persist-checkbox w-4 h-4 text-blue-600 rounded">
-                            <span>حفظ هذه الملاحظة أيضاً في جدول ملاحظات القسم الدائم لتظهر في التقييمات القادمة</span>
+                            <span>حفظ هذه الملاحظة أيضاً في قائمة الملاحظات العامة لتظهر في التقييمات القادمة</span>
                         </label>
                     </div>
                 </div>
@@ -1877,50 +1970,46 @@
         hint.classList.add('hidden');
         if (actionsBar) actionsBar.classList.remove('hidden');
 
-        let found = false;
-        (settingsData.procedures || []).forEach((proc, idx) => {
-            const applies = (!proc.depts || proc.depts.length === 0 || proc.depts.includes(selectedDept));
-            if (applies) {
-                found = true;
-                const obsText = proc.note || proc.name || '';
-                const defaultRec = proc.rec || '';
-                const defaultResp = proc.responsible || proc.resp || '';
+        const procs = settingsData.procedures || [];
+        if (procs.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-500 p-6 bg-gray-50 border border-dashed rounded">لا توجد ملاحظات مسجلة في الإعدادات</p>';
+            updateObsCounter();
+            return;
+        }
 
-                const div = document.createElement('div');
-                div.id = `obs_card_${idx}`;
-                div.className = "observation-card bg-gray-50 p-3.5 rounded-lg border border-gray-200 flex flex-col gap-2 transition hover:border-gray-300";
-                div.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <div class="pt-0.5">
-                            <input type="checkbox" id="obs_check_${idx}" onchange="toggleObservationCard(${idx})" class="obs-checkbox w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer">
-                        </div>
-                        <div class="flex-1">
-                            <label for="obs_check_${idx}" class="font-bold text-gray-800 text-sm cursor-pointer select-none leading-relaxed block hover:text-blue-900">
-                                ${escapeHtml(obsText)}
-                            </label>
-                            <div id="obs_details_${idx}" class="obs-details-box hidden mt-3 pt-3 border-t border-red-200 grid grid-cols-1 md:grid-cols-3 gap-3 bg-red-50/60 p-3 rounded">
-                                <div>
-                                    <label class="block text-[11px] font-bold text-red-900 mb-1">الملاحظة</label>
-                                    <input type="text" id="obs_note_${idx}" value="${escapeHtml(obsText)}" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-bold text-red-900 mb-1">التوصية</label>
-                                    <input type="text" id="obs_rec_${idx}" value="${escapeHtml(defaultRec)}" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium" placeholder="سجل التوصية">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-bold text-red-900 mb-1">المسؤول عن التنفيذ</label>
-                                    <input type="text" id="obs_resp_${idx}" value="${escapeHtml(defaultResp)}" class="w-full border border-gray-400 p-2 rounded text-xs bg-white text-gray-800 focus:outline-none focus:border-red-500 font-medium" placeholder="المسؤول عن التنفيذ">
-                                </div>
+        procs.forEach((proc, idx) => {
+            const obsText = proc.note || proc.name || '';
+            const defaultRec = proc.rec || '';
+
+            const div = document.createElement('div');
+            div.id = `obs_card_${idx}`;
+            div.className = "observation-card bg-gray-50 p-3.5 rounded-lg border border-gray-200 flex flex-col gap-2 transition hover:border-gray-300";
+            div.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="pt-0.5">
+                        <input type="checkbox" id="obs_check_${idx}" onchange="toggleObservationCard(${idx})" class="obs-checkbox w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer">
+                    </div>
+                    <div class="flex-1">
+                        <label for="obs_check_${idx}" class="font-bold text-gray-800 text-sm cursor-pointer select-none leading-relaxed block hover:text-blue-900">
+                            ${escapeHtml(obsText)}
+                        </label>
+                        <div id="obs_details_${idx}" class="obs-details-box hidden mt-3 pt-3 border-t border-red-200 grid grid-cols-1 md:grid-cols-2 gap-3 bg-red-50/60 p-3 rounded">
+                            <div class="bg-white p-2.5 rounded border border-red-200 shadow-2xs">
+                                <span class="block text-[11px] font-bold text-red-900 mb-1">الملاحظة (المخالفة)</span>
+                                <div class="text-xs text-gray-800 font-bold leading-relaxed py-0.5">${escapeHtml(obsText)}</div>
+                                <input type="hidden" id="obs_note_${idx}" value="${escapeHtml(obsText)}">
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-red-200 shadow-2xs">
+                                <span class="block text-[11px] font-bold text-red-900 mb-1">التوصية المقترحة</span>
+                                <div class="text-xs text-emerald-800 font-bold leading-relaxed py-0.5">${escapeHtml(defaultRec || '-')}</div>
+                                <input type="hidden" id="obs_rec_${idx}" value="${escapeHtml(defaultRec)}">
                             </div>
                         </div>
                     </div>
-                `;
-                list.appendChild(div);
-            }
+                </div>
+            `;
+            list.appendChild(div);
         });
-        if (!found) {
-            list.innerHTML = '<p class="text-center text-gray-500 p-6 bg-gray-50 border border-dashed rounded">لا توجد ملاحظات مسجلة لهذا القسم في الإعدادات</p>';
-        }
         updateObsCounter();
     }
     const renderWeeklyProcedures = renderDailyProcedures;
@@ -1948,17 +2037,16 @@
             }
         }
 
+        const globalResp = getSelectedResponsibles();
         const persistentObsToAdd = [];
         checkedBoxes.forEach(cb => {
             const idx = cb.id.replace('obs_check_', '');
             const noteInput = document.getElementById(`obs_note_${idx}`);
             const recInput = document.getElementById(`obs_rec_${idx}`);
-            const respInput = document.getElementById(`obs_resp_${idx}`);
             const persistInput = document.getElementById(`obs_persist_${idx}`);
 
             const note = noteInput ? noteInput.value.trim() : '';
             const rec = recInput ? recInput.value.trim() : '';
-            const resp = respInput ? respInput.value.trim() : '';
 
             if (note) {
                 formData.evaluations.push({
@@ -1966,15 +2054,13 @@
                     status: 'No',
                     note: note,
                     rec: rec,
-                    responsible: resp
+                    responsible: globalResp
                 });
 
                 if (persistInput && persistInput.checked) {
                     persistentObsToAdd.push({
                         note: note,
-                        rec: rec,
-                        responsible: resp,
-                        dept: formData.department
+                        rec: rec
                     });
                 }
             }
@@ -1986,19 +2072,12 @@
             persistentObsToAdd.forEach(item => {
                 const existing = settingsData.procedures.find(p => (p.note || p.name) === item.note);
                 if (existing) {
-                    if (!existing.depts) existing.depts = [];
-                    if (!existing.depts.includes(item.dept)) {
-                        existing.depts.push(item.dept);
-                    }
-                    if (!existing.responsible && item.responsible) existing.responsible = item.responsible;
                     if (!existing.rec && item.rec) existing.rec = item.rec;
                 } else {
                     settingsData.procedures.push({
                         name: item.note,
                         note: item.note,
-                        rec: item.rec,
-                        responsible: item.responsible,
-                        depts: [item.dept]
+                        rec: item.rec
                     });
                 }
             });
@@ -2038,12 +2117,24 @@
         if (failures.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-emerald-700 font-bold border border-gray-300">لا توجد ملاحظات مسجلة - تم استيفاء جميع معايير مكافحة العدوى بالقسم بنجاح</td></tr>';
         } else {
+            // Aggregate all unique responsibles for this report
+            const allResp = [];
             failures.forEach(e => {
+                if (e.responsible) {
+                    String(e.responsible).split(/[\r\n،,;/]+/).forEach(r => {
+                        const tr = r.trim();
+                        if (tr && !allResp.includes(tr)) allResp.push(tr);
+                    });
+                }
+            });
+            const allRespHtml = formatResponsibleHtml(allResp.join('\n'));
+
+            failures.forEach((e, idx) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="border border-gray-300 p-2 text-red-700 font-medium">${e.note || '-'}</td>
-                        <td class="border border-gray-300 p-2">${e.rec || '-'}</td>
-                        <td class="border border-gray-300 p-2 font-bold text-gray-800">${e.responsible || '-'}</td>
+                        <td class="border border-gray-300 p-2 text-red-700 font-medium align-top">${e.note || '-'}</td>
+                        <td class="border border-gray-300 p-2 align-top">${e.rec || '-'}</td>
+                        ${idx === 0 ? `<td class="border border-gray-300 p-2 font-bold text-gray-800 align-top text-center" rowspan="${failures.length}">${allRespHtml}</td>` : ''}
                     </tr>
                 `;
             });
@@ -2228,13 +2319,13 @@
                      <td class="border border-gray-600 p-2 font-bold align-top bg-gray-50 text-sm" rowspan="${freqNotes.length}">${dName}</td>
                      <td class="border border-gray-600 p-2 text-red-700 align-top font-medium">${freqNotes[0].txt}</td>
                      <td class="border border-gray-600 p-2 align-top font-medium">${freqNotes[0].rec}</td>
-                     <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${freqNotes[0].responsible || '-'}</td>
+                     <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${formatResponsibleHtml(freqNotes[0].responsible)}</td>
                  </tr>`;
                  for(let i=1; i<freqNotes.length; i++) {
                      html += `<tr class="hover:bg-gray-50 group">
                          <td class="border border-gray-600 p-2 text-red-700 align-top font-medium">${freqNotes[i].txt}</td>
                          <td class="border border-gray-600 p-2 align-top font-medium">${freqNotes[i].rec}</td>
-                         <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${freqNotes[i].responsible || '-'}</td>
+                         <td class="border border-gray-600 p-2 align-top font-bold text-gray-800 text-xs">${formatResponsibleHtml(freqNotes[i].responsible)}</td>
                      </tr>`;
                  }
             } else {
@@ -2613,33 +2704,20 @@
     }
 
     function buildCombinedDailyReport(date, reports) {
-        // Calculate Total Score for the whole day (Average of displayed reports)
-        let totalYesAll = 0;
-        let totalNoAll = 0;
-        
-        // Build Summary Table Rows
-        let summaryRows = '';
+        // Calculate Day Name in Arabic
+        const dateObj = new Date(date + 'T00:00:00');
+        const daysOfWeek = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        const dayName = !isNaN(dateObj.getTime()) ? daysOfWeek[dateObj.getDay()] : '';
+
+        // Extract Unique Periods and Inspectors
+        const periods = [...new Set(reports.map(r => r.period).filter(Boolean))].join(' ، ') || '-';
+        const inspectors = [...new Set(reports.map(r => r.inspector).filter(Boolean))].join(' ، ') || '-';
         
         // Data structure to group violations by Department across all reports for this day
-        // Key: Department Name, Value: Array of {note, rec}
+        // Key: Department Name, Value: Array of {note, rec, responsible}
         const deptViolationsMap = {};
 
         reports.forEach(rep => {
-            const total = rep.yesCount + rep.noCount;
-            const score = total === 0 ? 0 : Math.round((rep.yesCount / total) * 100);
-            
-            totalYesAll += rep.yesCount;
-            totalNoAll += rep.noCount;
-
-            // Summary Row
-            summaryRows += `
-                <tr class="hover:bg-gray-50">
-                    <td class="border border-gray-400 p-2 font-bold">${rep.dept}</td>
-                    <td class="border border-gray-400 p-2 text-center">${rep.period}</td>
-                    <td class="border border-gray-400 p-2 text-center">${rep.inspector}</td>
-                </tr>
-            `;
-
             // Aggregate Violations
             const failures = rep.rows.filter(r => r[8] === 'No');
             if (failures.length > 0) {
@@ -2665,6 +2743,23 @@
         if (affectedDepts.length === 0) {
             violationRows = '<tr><td colspan="4" class="p-4 text-center text-emerald-700 font-bold border border-gray-400">لا توجد ملاحظات مسجلة لهذا التاريخ في الأقسام المختارة - تم استيفاء جميع الإجراءات بنجاح</td></tr>';
         } else {
+            // Calculate total rows across all departments and gather all unique responsibles
+            let totalTableRows = 0;
+            const allTableResp = [];
+            affectedDepts.forEach(d => {
+                totalTableRows += deptViolationsMap[d].length;
+                deptViolationsMap[d].forEach(it => {
+                    if (it.responsible) {
+                        String(it.responsible).split(/[\r\n،,;/]+/).forEach(r => {
+                            const tr = r.trim();
+                            if (tr && !allTableResp.includes(tr)) allTableResp.push(tr);
+                        });
+                    }
+                });
+            });
+            const mergedRespHtml = formatResponsibleHtml(allTableResp.join('\n'));
+
+            let globalRowIdx = 0;
             affectedDepts.forEach(dept => {
                 const items = deptViolationsMap[dept];
                 items.forEach((item, idx) => {
@@ -2676,8 +2771,13 @@
                     violationRows += `
                         <td class="border border-gray-400 p-2 text-red-700 align-top">${item.note}</td>
                         <td class="border border-gray-400 p-2 align-top">${item.rec}</td>
-                        <td class="border border-gray-400 p-2 align-top font-bold text-gray-800">${item.responsible || '-'}</td>
-                    </tr>`;
+                    `;
+                    // Merge all cells in the Responsible column across all rows of the table into ONE single cell
+                    if (globalRowIdx === 0) {
+                        violationRows += `<td class="border border-gray-400 p-2 align-top font-bold text-gray-800 text-center" rowspan="${totalTableRows}">${mergedRespHtml}</td>`;
+                    }
+                    violationRows += `</tr>`;
+                    globalRowIdx++;
                 });
             });
         }
@@ -2694,36 +2794,32 @@
                     <div class="text-center flex-1 px-2">
                         <h1 class="text-xl font-bold text-blue-900 mb-1">${hospName}</h1>
                         <h2 class="text-lg font-bold text-blue-800">وحدة مكافحة العدوى</h2>
+                        <p class="text-sm font-bold text-gray-700 mt-1">تقرير المرور اليومي</p>
                     </div>
                     ${getReportLogoSlotHtml('left')}
                 </div>
-                <div class="flex flex-wrap justify-between items-end mt-3 px-4 md:px-10 gap-2">
-                    <p class="text-sm font-bold">تقرير مرور أسبوعي مجمع</p>
-                    <div class="text-sm border border-gray-400 px-4 py-1 rounded bg-gray-50">
-                        <span class="font-bold text-blue-900 ml-2">التاريخ:</span> 
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-2 border-t border-gray-200 text-xs avoid-break">
+                    <div class="border border-gray-400 px-3 py-1.5 rounded bg-gray-50 flex items-center justify-between">
+                        <span class="font-bold text-blue-900">اليوم:</span>
+                        <span class="font-bold text-gray-800">${dayName || '-'}</span>
+                    </div>
+                    <div class="border border-gray-400 px-3 py-1.5 rounded bg-gray-50 flex items-center justify-between">
+                        <span class="font-bold text-blue-900">التاريخ:</span>
                         <span class="font-bold text-gray-800">${date}</span>
+                    </div>
+                    <div class="border border-gray-400 px-3 py-1.5 rounded bg-gray-50 flex items-center justify-between">
+                        <span class="font-bold text-blue-900">الفترة:</span>
+                        <span class="font-bold text-gray-800">${periods}</span>
+                    </div>
+                    <div class="border border-gray-400 px-3 py-1.5 rounded bg-gray-50 flex items-center justify-between">
+                        <span class="font-bold text-blue-900">القائم بالمرور:</span>
+                        <span class="font-bold text-gray-800">${inspectors}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Table 1: Summary -->
-            <div class="mb-6">
-                <h3 class="font-bold text-blue-900 mb-2 border-r-4 border-blue-900 pr-2">ملخص المرور</h3>
-                <table class="w-full text-xs border-collapse border border-gray-400">
-                    <thead class="bg-blue-100 text-blue-900">
-                        <tr>
-                            <th class="border border-gray-400 p-2">القسم</th>
-                            <th class="border border-gray-400 p-2">الفترة</th>
-                            <th class="border border-gray-400 p-2">القائم بالمرور</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${summaryRows}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Table 2: Details -->
+            <!-- Observations Table (جدول الملاحظات) -->
             <div>
                 <h3 class="font-bold text-blue-900 mb-2 border-r-4 border-red-600 pr-2">تفاصيل الملاحظات والتوصيات وخطة التنفيذ</h3>
                 <table class="w-full text-xs border-collapse border border-gray-400">
@@ -2793,13 +2889,25 @@
         if(failures.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-emerald-700 font-bold border border-gray-300">لا توجد مخالفات مسجلة - تم استيفاء جميع إجراءات مكافحة العدوى</td></tr>';
         } else {
+            // Aggregate all unique responsibles for this report
+            const allResp = [];
             failures.forEach(r => {
-                const resp = r[11] || (settingsData?.procedures?.find(p => p.name === r[7])?.responsible) || '-';
+                const resp = r[11] || (settingsData?.procedures?.find(p => p.name === r[7])?.responsible) || '';
+                if (resp) {
+                    String(resp).split(/[\r\n،,;/]+/).forEach(item => {
+                        const tr = item.trim();
+                        if (tr && !allResp.includes(tr)) allResp.push(tr);
+                    });
+                }
+            });
+            const allRespHtml = formatResponsibleHtml(allResp.join('\n'));
+
+            failures.forEach((r, idx) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="border border-gray-300 p-2 text-red-700 font-medium">${r[9] || '-'}</td>
-                        <td class="border border-gray-300 p-2">${r[10] || '-'}</td>
-                        <td class="border border-gray-300 p-2 font-bold text-gray-800">${resp}</td>
+                        <td class="border border-gray-300 p-2 text-red-700 font-medium align-top">${r[9] || '-'}</td>
+                        <td class="border border-gray-300 p-2 align-top">${r[10] || '-'}</td>
+                        ${idx === 0 ? `<td class="border border-gray-300 p-2 font-bold text-gray-800 align-top text-center" rowspan="${failures.length}">${allRespHtml}</td>` : ''}
                     </tr>
                 `;
             });
